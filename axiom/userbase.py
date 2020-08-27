@@ -49,14 +49,13 @@ from txpasslib.test.doubles import SynchronousReactorThreads
 from axiom.store import Store
 from axiom.item import Item, declareLegacyItem
 from axiom.substore import SubStore
-from axiom.attributes import (
-    text, integer, reference, boolean, AND, OR, inmemory)
-from axiom.errors import (
-    BadCredentials, NoSuchUser, DuplicateUser, MissingDomainPart)
+from axiom.attributes import text, integer, reference, boolean, AND, OR, inmemory
+from axiom.errors import BadCredentials, NoSuchUser, DuplicateUser, MissingDomainPart
 from axiom.scheduler import IScheduler
 from axiom import upgrade, iaxiom
 
 ANY_PROTOCOL = u'*'
+
 
 def dflip(x):
     warnings.warn("Don't use dflip no more", stacklevel=2)
@@ -83,14 +82,12 @@ class DatabaseDirectoryConflict(Exception):
     """
 
 
-
 class IPreauthCredentials(Interface):
     """
     Deprecated.  Don't use this.  If you wrote a checker which can check this
     interface, make it check one of the interfaces L{Preauthenticated}
     implements, instead.
     """
-
 
 
 class Preauthenticated(object):
@@ -101,11 +98,11 @@ class Preauthenticated(object):
     Credentials interfaces methods are implemented to behave as if the correct
     credentials had been supplied.
     """
+
     implements(IUsernamePassword)
 
     def __init__(self, username):
         self.username = username
-
 
     def checkPassword(self, password):
         """
@@ -113,47 +110,63 @@ class Preauthenticated(object):
         """
         return True
 
-
     def __repr__(self):
         return '<Preauthenticated: %s>' % (self.username,)
-
 
 
 class LoginMethod(Item):
     typeName = 'login_method'
     schemaVersion = 2
 
-    localpart = text(doc="""
+    localpart = text(
+        doc="""
     A local-part of my user's identifier.
-    """, indexed=True, allowNone=False)
+    """,
+        indexed=True,
+        allowNone=False,
+    )
 
-    domain = text(doc="""
+    domain = text(
+        doc="""
     The domain part of my user's identifier. [XXX See TODO below]
     May be None (generally for "system" users).
-    """, indexed=True)
+    """,
+        indexed=True,
+    )
 
-    internal = boolean(doc="""
+    internal = boolean(
+        doc="""
     Flag indicating whether this is a method maintained by this server, or if
     it represents an external contact mechanism (such as a third-party email
     provider)
-    """, allowNone=False)
+    """,
+        allowNone=False,
+    )
 
     protocol = text(indexed=True, allowNone=False)
-    account = reference(doc="""
+    account = reference(
+        doc="""
     A reference to the LoginAccount for which this is a login method.
-    """, allowNone=False)
+    """,
+        allowNone=False,
+    )
 
     verified = boolean(indexed=True, allowNone=False)
 
+
 def upgradeLoginMethod1To2(old):
     return old.upgradeVersion(
-            'login_method', 1, 2,
-            localpart=old.localpart,
-            domain=old.domain,
-            internal=old.internal,
-            protocol=old.protocol,
-            account=old.account,
-            verified=old.verified)
+        'login_method',
+        1,
+        2,
+        localpart=old.localpart,
+        domain=old.domain,
+        internal=old.internal,
+        protocol=old.protocol,
+        account=old.account,
+        verified=old.verified,
+    )
+
 
 upgrade.registerUpgrader(upgradeLoginMethod1To2, 'login_method', 1, 2)
 
@@ -172,6 +185,7 @@ def _daemonThread(*a, **kw):
 
 _globalTxCC = None
 
+
 def _getCC():
     """
     Lazily initialize a global C{TxCryptContext}.
@@ -179,10 +193,10 @@ def _getCC():
     global _globalTxCC
     if _globalTxCC is None:
         from twisted.internet import reactor
+
         _globalTxCC = TxCryptContext(
-            context=_globalCC,
-            reactor=reactor,
-            worker=pool(lambda: 10, _daemonThread))
+            context=_globalCC, reactor=reactor, worker=pool(lambda: 10, _daemonThread)
+        )
     return _globalTxCC
 
 
@@ -200,7 +214,6 @@ def getTestContext():
     return (ctx, perform)
 
 
-
 class LoginAccount(Item):
     """
     I am an entry in a LoginBase.
@@ -214,20 +227,20 @@ class LoginAccount(Item):
     database-resident but the user should not be allowed to log in.
 
     """
+
     typeName = 'login'
     schemaVersion = 3
 
     # DEPRECATED: Do not use directly; see setPassword etc.
     password = text()
     passwordHash = text()
-    avatars = reference()       # reference to a thing which can be adapted to
-                                # implementations for application-level
-                                # protocols.  In general this is a reference to
-                                # a SubStore because this is optimized for
-                                # applications where per-user data is a
-                                # substantial portion of the cost.
+    avatars = reference()  # reference to a thing which can be adapted to
+    # implementations for application-level
+    # protocols.  In general this is a reference to
+    # a SubStore because this is optimized for
+    # applications where per-user data is a
+    # substantial portion of the cost.
     disabled = integer()
-
 
     def __conform__(self, interface):
         """
@@ -235,7 +248,6 @@ class LoginAccount(Item):
         """
         ifa = interface(self.avatars, None)
         return ifa
-
 
     def migrateDown(self):
         """
@@ -245,6 +257,7 @@ class LoginAccount(Item):
         down into it.
         """
         ss = self.avatars.open()
+
         def _():
             oldAccounts = ss.query(LoginAccount)
             oldMethods = ss.query(LoginMethod)
@@ -252,8 +265,8 @@ class LoginAccount(Item):
                 x.deleteFromStore()
             self.cloneInto(ss, ss)
             IScheduler(ss).migrateDown()
-        ss.transact(_)
 
+        ss.transact(_)
 
     def migrateUp(self):
         """
@@ -262,6 +275,7 @@ class LoginAccount(Item):
         site store which contains it.
         """
         siteStore = self.store.parent
+
         def _():
             # No convenience method for the following because needing to do it is
             # *rare*.  It *should* be ugly; 99% of the time if you need to do this
@@ -269,8 +283,8 @@ class LoginAccount(Item):
             siteStoreSubRef = siteStore.getItemByID(self.store.idInParent)
             self.cloneInto(siteStore, siteStoreSubRef)
             IScheduler(self.store).migrateUp()
-        siteStore.transact(_)
 
+        siteStore.transact(_)
 
     def cloneInto(self, newStore, avatars):
         """
@@ -278,27 +292,30 @@ class LoginAccount(Item):
 
         Return the copied LoginAccount.
         """
-        la = LoginAccount(store=newStore,
-                          passwordHash=self.passwordHash,
-                          avatars=avatars,
-                          disabled=self.disabled)
-        for siteMethod in self.store.query(LoginMethod,
-                                           LoginMethod.account == self):
-            LoginMethod(store=newStore,
-                        localpart=siteMethod.localpart,
-                        domain=siteMethod.domain,
-                        internal=siteMethod.internal,
-                        protocol=siteMethod.protocol,
-                        verified=siteMethod.verified,
-                        account=la)
+        la = LoginAccount(
+            store=newStore,
+            passwordHash=self.passwordHash,
+            avatars=avatars,
+            disabled=self.disabled,
+        )
+        for siteMethod in self.store.query(LoginMethod, LoginMethod.account == self):
+            LoginMethod(
+                store=newStore,
+                localpart=siteMethod.localpart,
+                domain=siteMethod.domain,
+                internal=siteMethod.internal,
+                protocol=siteMethod.protocol,
+                verified=siteMethod.verified,
+                account=la,
+            )
         return la
-
 
     def deleteLoginMethods(self):
         self.store.query(LoginMethod, LoginMethod.account == self).deleteFromStore()
 
-
-    def addLoginMethod(self, localpart, domain, protocol=ANY_PROTOCOL, verified=False, internal=False):
+    def addLoginMethod(
+        self, localpart, domain, protocol=ANY_PROTOCOL, verified=False, internal=False
+    ):
         """
         Add a login method to this account, propogating up or down as necessary
         to site store or user store to maintain consistency.
@@ -312,19 +329,21 @@ class LoginAccount(Item):
             # In takes you east
             otherStore = self.store.parent
             subStoreItem = self.store.parent.getItemByID(self.store.idInParent)
-            peer = otherStore.findUnique(LoginAccount,
-                                         LoginAccount.avatars == subStoreItem)
+            peer = otherStore.findUnique(
+                LoginAccount, LoginAccount.avatars == subStoreItem
+            )
 
         # Up and down take you home
         for store, account in [(otherStore, peer), (self.store, self)]:
-            store.findOrCreate(LoginMethod,
-                               account=account,
-                               localpart=localpart,
-                               domain=domain,
-                               protocol=protocol,
-                               verified=verified,
-                               internal=internal)
-
+            store.findOrCreate(
+                LoginMethod,
+                account=account,
+                localpart=localpart,
+                domain=domain,
+                protocol=protocol,
+                verified=verified,
+                internal=internal,
+            )
 
     def setPassword(self, newPassword):
         """
@@ -340,7 +359,6 @@ class LoginAccount(Item):
             self.passwordHash = hash.decode('ascii')
 
         return realm._getCC().hash(newPassword).addCallback(_hashed)
-
 
     def replacePassword(self, currentPassword, newPassword):
         """
@@ -362,8 +380,8 @@ class LoginAccount(Item):
         realm = self.store.findUnique(LoginSystem)
         return (
             realm._getCC()
-                .verify(currentPassword, self.passwordHash)
-                .addCallback(_verified)
+            .verify(currentPassword, self.passwordHash)
+            .addCallback(_verified)
         )
 
 
@@ -381,9 +399,11 @@ def insertUserStore(siteStore, userStorePath):
     # exclusively by this process.
     ls = siteStore.findUnique(LoginSystem)
     unattachedSubStore = Store(userStorePath)
-    for lm in unattachedSubStore.query(LoginMethod,
-                                       LoginMethod.account == unattachedSubStore.findUnique(LoginAccount),
-                                       sort=LoginMethod.internal.descending):
+    for lm in unattachedSubStore.query(
+        LoginMethod,
+        LoginMethod.account == unattachedSubStore.findUnique(LoginAccount),
+        sort=LoginMethod.internal.descending,
+    ):
         if ls.accountByAddress(lm.localpart, lm.domain) is None:
             localpart, domain = lm.localpart, lm.domain
             break
@@ -430,6 +450,7 @@ def extractUserStore(userAccount, extractionDestination, legacySiteAuthoritative
         userAccount.migrateDown()
     av = userAccount.avatars
     av.open().close()
+
     def _():
         # We're separately deleting several Items from the site store, then
         # we're moving some files.  If we cannot move the files, we don't want
@@ -458,6 +479,7 @@ def extractUserStore(userAccount, extractionDestination, legacySiteAuthoritative
         userAccount.deleteLoginMethods()
         userAccount.deleteFromStore()
         av.storepath.moveTo(extractionDestination)
+
     userAccount.store.transact(_)
 
 
@@ -470,10 +492,13 @@ def upgradeLoginAccount1To2(oldAccount):
             password = None
 
     newAccount = oldAccount.upgradeVersion(
-        'login', 1, 2,
+        'login',
+        1,
+        2,
         password=password,
         avatars=oldAccount.avatars,
-        disabled=oldAccount.disabled)
+        disabled=oldAccount.disabled,
+    )
 
     def make(s, acc):
         LoginMethod(
@@ -483,18 +508,18 @@ def upgradeLoginAccount1To2(oldAccount):
             internal=False,
             protocol=u'email',
             account=acc,
-            verified=True)
+            verified=True,
+        )
 
     make(newAccount.store, newAccount)
     ss = newAccount.avatars.open()
     # create account in substore to represent the user's own record of their
     # password; moves with them during migrations, etc.
     subacc = loginAccountv2(
-        store=ss,
-        password=newAccount.password,
-        avatars=ss,
-        disabled=newAccount.disabled)
+        store=ss, password=newAccount.password, avatars=ss, disabled=newAccount.disabled
+    )
     make(ss, subacc)
+
 
 upgrade.registerUpgrader(upgradeLoginAccount1To2, 'login', 1, 2)
 
@@ -502,10 +527,9 @@ upgrade.registerUpgrader(upgradeLoginAccount1To2, 'login', 1, 2)
 loginAccountv2 = declareLegacyItem(
     typeName='login',
     schemaVersion=2,
-    attributes=dict(
-        avatars=reference(),
-        disabled=integer(),
-        password=text()))
+    attributes=dict(avatars=reference(), disabled=integer(), password=text()),
+)
+
 
 def upgradeLoginAccount2To3(oldAccount):
     if oldAccount.password is None:
@@ -513,30 +537,34 @@ def upgradeLoginAccount2To3(oldAccount):
     else:
         passwordHash = _globalCC.hash(oldAccount.password).decode('ascii')
     return oldAccount.upgradeVersion(
-        'login', 2, 3,
+        'login',
+        2,
+        3,
         passwordHash=passwordHash,
         avatars=oldAccount.avatars,
-        disabled=oldAccount.disabled)
+        disabled=oldAccount.disabled,
+    )
+
 
 upgrade.registerUpgrader(upgradeLoginAccount2To3, 'login', 2, 3)
-
 
 
 class SubStoreLoginMixin:
     def makeAvatars(self, domain, username):
         return SubStore.createNew(self.store, ('account', domain, username + '.axiom'))
 
+
 class LoginBase:
     """
     I am a database powerup which provides an interface to a collection of
     username/password pairs mapped to user application objects.
     """
+
     implements(IRealm, ICredentialsChecker)
 
     credentialInterfaces = (IUsernamePassword,)
 
     powerupInterfaces = (IRealm, ICredentialsChecker)
-
 
     def _getCC(self):
         try:
@@ -544,23 +572,33 @@ class LoginBase:
         except AttributeError:
             return _getCC()
 
-
     def accountByAddress(self, username, domain):
         """
         @type username: C{unicode} without NUL
         @type domain: C{unicode} without NUL
         """
-        for account in self.store.query(LoginAccount,
-                                     AND(LoginMethod.domain == domain,
-                                         LoginMethod.localpart == username,
-                                         LoginAccount.disabled == 0,
-                                         LoginMethod.account == LoginAccount.storeID)):
+        for account in self.store.query(
+            LoginAccount,
+            AND(
+                LoginMethod.domain == domain,
+                LoginMethod.localpart == username,
+                LoginAccount.disabled == 0,
+                LoginMethod.account == LoginAccount.storeID,
+            ),
+        ):
             return account
 
-
-    def addAccount(self, username, domain, password, avatars=None,
-                   protocol=u'email', disabled=0, internal=False,
-                   verified=True):
+    def addAccount(
+        self,
+        username,
+        domain,
+        password,
+        avatars=None,
+        protocol=u'email',
+        disabled=0,
+        internal=False,
+        verified=True,
+    ):
         """
         Create a user account, add it to this LoginBase, and return it.
 
@@ -610,31 +648,35 @@ class LoginBase:
         # create this unconditionally; as the docstring says, we must be run
         # within a transaction, so if something goes wrong in the substore
         # transaction this item's creation will be reverted...
-        la = LoginAccount(store=self.store,
-                          passwordHash=passwordHash,
-                          avatars=avatars,
-                          disabled=disabled)
+        la = LoginAccount(
+            store=self.store,
+            passwordHash=passwordHash,
+            avatars=avatars,
+            disabled=disabled,
+        )
 
         def createSubStoreAccountObjects():
 
-            LoginAccount(store=subStore,
-                         passwordHash=passwordHash,
-                         disabled=disabled,
-                         avatars=subStore)
+            LoginAccount(
+                store=subStore,
+                passwordHash=passwordHash,
+                disabled=disabled,
+                avatars=subStore,
+            )
 
-            la.addLoginMethod(localpart=username,
-                              domain=domain,
-                              protocol=protocol,
-                              internal=internal,
-                              verified=verified)
+            la.addLoginMethod(
+                localpart=username,
+                domain=domain,
+                protocol=protocol,
+                internal=internal,
+                verified=verified,
+            )
 
         subStore.transact(createSubStoreAccountObjects)
         return la
 
-
     def logoutFactory(self, obj):
         return getattr(obj, 'logout', lambda: None)
-
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if avatarId is ANONYMOUS:
@@ -645,8 +687,9 @@ class LoginBase:
             impl = interface(av, None)
             if impl is not None:
                 self.loginCount += 1
-                log.msg(interface=iaxiom.IStatEvent, name='cred',
-                        cred_interface=interface)
+                log.msg(
+                    interface=iaxiom.IStatEvent, name='cred', cred_interface=interface
+                )
                 return interface, impl, self.logoutFactory(impl)
         raise NotImplementedError()
 
@@ -676,11 +719,11 @@ class LoginBase:
                 return (
                     self._getCC()
                     .verify(credentials.password, acct.passwordHash)
-                    .addCallback(verified))
+                    .addCallback(verified)
+                )
 
         self.failedLogins += 1
         raise NoSuchUser(credentials.username)
-
 
 
 class LoginSystem(Item, LoginBase, SubStoreLoginMixin):
@@ -698,8 +741,7 @@ def getLoginMethods(store, protocol=None):
     them by protocol
     """
     if protocol is not None:
-        comp = OR(LoginMethod.protocol == u'*',
-                  LoginMethod.protocol == protocol)
+        comp = OR(LoginMethod.protocol == u'*', LoginMethod.protocol == protocol)
     else:
         comp = None
     return store.query(LoginMethod, comp)
@@ -716,8 +758,7 @@ def getAccountNames(store, protocol=None):
     @return: A generator of two-tuples of (username, domain) which
     refer to the given store.
     """
-    return ((meth.localpart, meth.domain) for meth
-                in getLoginMethods(store, protocol))
+    return ((meth.localpart, meth.domain) for meth in getLoginMethods(store, protocol))
 
 
 def getDomainNames(store):
@@ -725,8 +766,11 @@ def getDomainNames(store):
     Retrieve a list of all local domain names represented in the given store.
     """
     domains = set()
-    domains.update(store.query(
-            LoginMethod,
-            AND(LoginMethod.internal == True,
-                LoginMethod.domain != None)).getColumn("domain").distinct())
+    domains.update(
+        store.query(
+            LoginMethod, AND(LoginMethod.internal == True, LoginMethod.domain != None)
+        )
+        .getColumn("domain")
+        .distinct()
+    )
     return sorted(domains)

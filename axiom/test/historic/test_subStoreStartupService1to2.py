@@ -1,8 +1,8 @@
-
 from axiom.substore import SubStore
 from axiom.test.historic.stubloader import StubbedTest
 
 from axiom.test.historic.stub_subStoreStartupService1to2 import DummyService
+
 
 class UpgradeTest(StubbedTest):
     def testSubStoreServiceStarterStoppedStartingSubStoreServices(self):

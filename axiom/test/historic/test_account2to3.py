@@ -21,20 +21,17 @@ class AccountUpgradeTest(stubloader.StubbedTest):
         ls = IRealm(self.store)
         ls._txCryptContext, perform = getTestContext()
         p = Portal(ls, [ICredentialsChecker(self.store)])
-        d = p.login(
-            UsernamePassword('test@example.com', SECRET), None, IGarbage)
+        d = p.login(UsernamePassword('test@example.com', SECRET), None, IGarbage)
         perform()
         (ifc, av, lgo) = self.successResultOf(d)
         self.assertEqual(av.garbage, 7)
 
-        d = p.login(
-            UsernamePassword('test@example.com', SECRET2), None, IGarbage)
+        d = p.login(UsernamePassword('test@example.com', SECRET2), None, IGarbage)
         perform()
         self.failureResultOf(d, BadCredentials)
 
         # Have to let the substore upgrade complete
         return av.store.whenFullyUpgraded()
-
 
     def test_password(self):
         """

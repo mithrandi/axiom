@@ -3,9 +3,11 @@ from axiom.item import Item
 
 from axiom.attributes import reference, integer
 
+
 class A(Item):
     typeName = 'test_circular_a'
     b = reference()
+
 
 class B(Item):
     typeName = 'test_circular_b'
@@ -14,7 +16,9 @@ class B(Item):
 
     schemaVersion = 2
 
+
 from axiom.upgrade import registerUpgrader
+
 
 def b1to2(oldb):
     # This upgrader isn't doing anything that actually makes sense; in a
@@ -25,8 +29,8 @@ def b1to2(oldb):
     oldb.a.deleteFromStore()
     newb = oldb.upgradeVersion('test_circular_b', 1, 2)
     newb.n = oldb.n
-    newb.a = A(store=newb.store,
-               b=newb)
+    newb.a = A(store=newb.store, b=newb)
     return newb
+
 
 registerUpgrader(b1to2, 'test_circular_b', 1, 2)

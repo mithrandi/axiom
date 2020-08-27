@@ -5,7 +5,10 @@ from axiom.errors import ItemNotFound
 from axiom.item import Item
 from axiom.attributes import text
 from axiom.upgrade import (
-    registerAttributeCopyingUpgrader, upgradeExplicitOid, _hasExplicitOid)
+    registerAttributeCopyingUpgrader,
+    upgradeExplicitOid,
+    _hasExplicitOid,
+)
 
 
 class Dummy(Item):
@@ -25,7 +28,6 @@ class Dummy2(Item):
     attribute = text(doc='text', allowNone=False)
 
 
-
 class StoreIDTransitionTest(StubbedTest):
     def test_transition(self):
         """
@@ -36,13 +38,12 @@ class StoreIDTransitionTest(StubbedTest):
 
         self.assertEquals(self.store.getItemByID(1).attribute, u'one')
         self.assertEquals(
-            self.store.findUnique(Dummy, Dummy.attribute == u'two').storeID,
-            2)
+            self.store.findUnique(Dummy, Dummy.attribute == u'two').storeID, 2
+        )
         self.assertRaises(ItemNotFound, self.store.getItemByID, 3)
         i2 = self.store.getItemByID(4)
         self.assertEquals(i2.attribute, u'four')
         self.assertIsInstance(i2, Dummy2)
-
 
     def test_vacuum(self):
         """
@@ -56,17 +57,13 @@ class StoreIDTransitionTest(StubbedTest):
         self.store.executeSQL('VACUUM')
         self.test_transition()
 
-
     def test_upgradeOid(self):
         """
         When an item type is upgraded, the new table has an explicit oid
         column.
         """
-        self.assertTrue(
-            _hasExplicitOid(self.store, 'item_axiom_storeid_dummy_v2'))
-        self.assertFalse(
-            _hasExplicitOid(self.store, 'item_axiom_storeid_dummy2_v1'))
-
+        self.assertTrue(_hasExplicitOid(self.store, 'item_axiom_storeid_dummy_v2'))
+        self.assertFalse(_hasExplicitOid(self.store, 'item_axiom_storeid_dummy2_v1'))
 
     def test_oids(self):
         """
@@ -75,7 +72,5 @@ class StoreIDTransitionTest(StubbedTest):
         upgradeExplicitOid(self.store)
         self.assertTrue(_hasExplicitOid(self.store, 'axiom_objects'))
         self.assertTrue(_hasExplicitOid(self.store, 'axiom_types'))
-        self.assertTrue(
-            _hasExplicitOid(self.store, 'item_axiom_storeid_dummy_v2'))
-        self.assertTrue(
-            _hasExplicitOid(self.store, 'item_axiom_storeid_dummy2_v1'))
+        self.assertTrue(_hasExplicitOid(self.store, 'item_axiom_storeid_dummy_v2'))
+        self.assertTrue(_hasExplicitOid(self.store, 'item_axiom_storeid_dummy2_v1'))

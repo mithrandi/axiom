@@ -1,4 +1,3 @@
-
 """
 Test upgrading L{_SubSchedulerParentHook} from version 2 to 3.
 """
@@ -14,13 +13,15 @@ class SubSchedulerParentHookUpgradeTests(StubbedTest):
     """
     Test upgrading L{_SubSchedulerParentHook} from version 2 to 3.
     """
+
     def setUp(self):
         d = StubbedTest.setUp(self)
+
         def cbSetUp(ignored):
             self.hook = self.store.findUnique(_SubSchedulerParentHook)
+
         d.addCallback(cbSetUp)
         return d
-
 
     def test_attributesCopied(self):
         """
@@ -28,9 +29,7 @@ class SubSchedulerParentHookUpgradeTests(StubbedTest):
         the current version, version 4, C{subStore}, ought to have been
         copied over.
         """
-        self.assertIdentical(
-            self.hook.subStore, self.store.findUnique(SubStore))
-
+        self.assertIdentical(self.hook.subStore, self.store.findUnique(SubStore))
 
     def test_uninstalled(self):
         """
@@ -38,7 +37,10 @@ class SubSchedulerParentHookUpgradeTests(StubbedTest):
         store is deleted in the upgrade to schema version 4.
         """
         self.assertEquals(
-            list(self.store.query(
-                    _DependencyConnector,
-                    _DependencyConnector.installee == self.hook)),
-            [])
+            list(
+                self.store.query(
+                    _DependencyConnector, _DependencyConnector.installee == self.hook
+                )
+            ),
+            [],
+        )

@@ -1,4 +1,3 @@
-
 """
 Tests for the upgrade of SubScheduler from version 1 to version 2, in which it
 was largely supplanted by L{_UserScheduler}.
@@ -19,10 +18,12 @@ class SubSchedulerUpgradeTests(StubbedTest):
         """
         sub = self.store.findFirst(SubStore).open()
         upgraded = sub.whenFullyUpgraded()
+
         def subUpgraded(ignored):
             scheduler = sub.findUnique(SubScheduler)
             self.assertEquals(list(sub.interfacesFor(scheduler)), [])
 
             self.assertIsInstance(IScheduler(sub), _UserScheduler)
+
         upgraded.addCallback(subUpgraded)
         return upgraded

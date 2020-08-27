@@ -3,8 +3,10 @@
 from axiom.attributes import integer
 from axiom.item import Item
 
+
 class Simple(Item):
     """
     A simple item that doesn't do much.
     """
+
     dummy = integer()

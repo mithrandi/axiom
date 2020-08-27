@@ -1,7 +1,6 @@
-
-
 from axiom.item import Item
 from axiom.attributes import text, integer, reference
+
 
 class Player(Item):
     typeName = 'test_app_player'
@@ -9,6 +8,7 @@ class Player(Item):
 
     name = text()
     sword = reference()
+
 
 class Sword(Item):
     typeName = 'test_app_sword'

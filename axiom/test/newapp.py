@@ -6,10 +6,13 @@ from axiom.attributes import text, integer, reference, inmemory
 
 from axiom.upgrade import registerUpgrader
 
+
 class ActivateHelper:
     activated = 0
+
     def activate(self):
         self.activated += 1
+
 
 class Adventurer(ActivateHelper, Item):
     typeName = 'test_app_player'
@@ -42,18 +45,20 @@ def upgradePlayerAndSword(oldplayer):
 
     return newplayer, newsword
 
+
 def player1to2(oldplayer):
     newplayer, newsword = upgradePlayerAndSword(oldplayer)
     return newplayer
 
+
 def sword1to2(oldsword):
     oldPlayerType = oldsword.store.getOldVersionOf('test_app_player', 1)
-    oldplayer = list(oldsword.store.query(oldPlayerType,
-                                          oldPlayerType.sword == oldsword))[0]
+    oldplayer = list(
+        oldsword.store.query(oldPlayerType, oldPlayerType.sword == oldsword)
+    )[0]
     newplayer, newsword = upgradePlayerAndSword(oldplayer)
     return newsword
 
 
 registerUpgrader(sword1to2, 'test_app_sword', 1, 2)
 registerUpgrader(player1to2, 'test_app_player', 1, 2)
-

@@ -26,6 +26,7 @@ from twisted.python import log
 
 from axiom import errors, iaxiom
 
+
 class Connection(object):
     """
     Wrapper for an SQLite3 C{Connection} object.
@@ -33,21 +34,21 @@ class Connection(object):
     @type closed: L{bool}
     @ivar closed: Has this cursor been closed?
     """
+
     def __init__(self, connection, timeout=None):
         self._connection = connection
         self._timeout = timeout
         self.closed = False
 
-
     def fromDatabaseName(cls, dbFilename, timeout=None, isolationLevel=None):
-        return cls(dbapi2.connect(dbFilename, timeout=0,
-                                  isolation_level=isolationLevel))
-    fromDatabaseName = classmethod(fromDatabaseName)
+        return cls(
+            dbapi2.connect(dbFilename, timeout=0, isolation_level=isolationLevel)
+        )
 
+    fromDatabaseName = classmethod(fromDatabaseName)
 
     def cursor(self):
         return Cursor(self, self._timeout)
-
 
     def identifySQLError(self, sql, args, e):
         """
@@ -61,14 +62,12 @@ class Connection(object):
             return errors.TableAlreadyExists(sql, args, e)
         return errors.SQLError(sql, args, e)
 
-
     def close(self):
         """
         Close the underlying connection.
         """
         self._connection.close()
         self.closed = True
-
 
 
 class Cursor(object):
@@ -78,16 +77,15 @@ class Cursor(object):
     @type closed: L{bool}
     @ivar closed: Has this cursor been closed?
     """
+
     def __init__(self, connection, timeout):
         self._connection = connection
         self._cursor = connection._connection.cursor()
         self.timeout = timeout
         self.closed = False
 
-
     def __iter__(self):
         return iter(self._cursor)
-
 
     def time(self):
         """
@@ -96,7 +94,6 @@ class Cursor(object):
         """
         return time.time()
 
-
     def sleep(self, seconds):
         """
         Block for the given number of seconds.
@@ -104,7 +101,6 @@ class Cursor(object):
         @type seconds: C{float}
         """
         time.sleep(seconds)
-
 
     def execute(self, sql, args=()):
         try:
@@ -152,22 +148,24 @@ class Cursor(object):
                         log.msg('Extremely long execute: %s' % (txntime - blockedTime,))
                         log.msg(sql)
                         # import traceback; traceback.print_stack()
-                    log.msg(interface=iaxiom.IStatEvent,
-                            stat_cursor_execute_time=txntime,
-                            stat_cursor_blocked_time=blockedTime)
+                    log.msg(
+                        interface=iaxiom.IStatEvent,
+                        stat_cursor_execute_time=txntime,
+                        stat_cursor_blocked_time=blockedTime,
+                    )
             except dbapi2.OperationalError as e:
                 if e.args[0] == 'database schema has changed':
                     return self._cursor.execute(sql, args)
                 raise
-        except (dbapi2.ProgrammingError,
-                dbapi2.InterfaceError,
-                dbapi2.OperationalError), e:
+        except (
+            dbapi2.ProgrammingError,
+            dbapi2.InterfaceError,
+            dbapi2.OperationalError,
+        ), e:
             raise self._connection.identifySQLError(sql, args, e)
-
 
     def lastRowID(self):
         return self._cursor.lastrowid
-
 
     def close(self):
         """
@@ -185,4 +183,4 @@ __all__ = [
     'OperationalError',
     'Connection',
     'sqlite_version_info',
-    ]
+]

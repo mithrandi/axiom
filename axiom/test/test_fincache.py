@@ -9,14 +9,13 @@ def noop():
     pass
 
 
-
 class Object(object):
     """
     An object which can be stored in a FinalizingCache.
     """
+
     def __init__(self, name=None):
         self.name = name
-
 
     def __finalizer__(self):
         return noop
@@ -26,16 +25,15 @@ class FinalizingCacheTests(SynchronousTestCase):
     """
     Tests for L{axiom._fincache.FinalizingCache}.
     """
+
     def setUp(self):
         self.cache = FinalizingCache()
-
 
     def test_nonexistentItem(self):
         """
         Retrieving a nonexistent item from the cache results in L{KeyError}.
         """
         self.assertRaises(KeyError, self.cache.get, 42)
-
 
     def test_storeItem(self):
         """
@@ -46,7 +44,6 @@ class FinalizingCacheTests(SynchronousTestCase):
         self.cache.cache(42, o)
         self.assertIdentical(o, self.cache.get(42))
 
-
     def test_storeItemAndCollect(self):
         """
         An object will be removed from the cache if it is garbage collected.
@@ -56,7 +53,6 @@ class FinalizingCacheTests(SynchronousTestCase):
         del o
         gc.collect()
         self.assertRaises(KeyError, self.cache.get, 42)
-
 
     def test_storeOverCollectedItem(self):
         """
@@ -73,7 +69,6 @@ class FinalizingCacheTests(SynchronousTestCase):
         self.cache.cache(42, o2)
         gc.enable()
         self.assertEqual(2, self.cache.get(42).name)
-
 
 
 class SyntheticGCInteractions(SynchronousTestCase):
@@ -102,6 +97,7 @@ class SyntheticGCInteractions(SynchronousTestCase):
             """
             A colletion of expirable weak references.
             """
+
             def __init__(self):
                 self.references = []
 
@@ -136,6 +132,7 @@ class SyntheticGCInteractions(SynchronousTestCase):
             """
             A reference that can be expired.
             """
+
             def __init__(self, target, callback):
                 self.target = target
                 self.callback = callback
@@ -167,11 +164,14 @@ class SyntheticGCInteractions(SynchronousTestCase):
 
         expirables = Expirables()
         cache = FinalizingCache(expirables.ref)
+
         class identifiable(object):
             def __init__(self, name):
                 self.name = name
+
             def __repr__(self):
                 return self.name
+
             def __finalizer__(self):
                 return noop
 

@@ -18,20 +18,21 @@ class _CheckSystemVersion(Service):
 
     @ivar store: The L{Store} in which to update version information.
     """
+
     def __init__(self, store):
         self.store = store
 
-
     def startService(self):
         from axiom.listversions import checkSystemVersion
-        checkSystemVersion(self.store)
 
+        checkSystemVersion(self.store)
 
 
 class AxiomaticStart(object):
     """
     L{IServiceMaker} plugin which gets an L{IService} from an Axiom store.
     """
+
     classProvides(IPlugin, IServiceMaker)
 
     tapname = "axiomatic-start"
@@ -41,10 +42,9 @@ class AxiomaticStart(object):
         optParameters = [
             ('dbdir', 'd', None, 'Path containing Axiom database to start'),
             ('journal-mode', None, None, 'SQLite journal mode to set'),
-            ]
+        ]
 
         optFlags = [('debug', 'b', 'Enable Axiom-level debug logging')]
-
 
     def makeService(cls, options):
         """
@@ -52,6 +52,7 @@ class AxiomaticStart(object):
         configuration.
         """
         from axiom.store import Store
+
         jm = options['journal-mode']
         if jm is not None:
             jm = jm.decode('ascii')
@@ -59,6 +60,7 @@ class AxiomaticStart(object):
         service = IService(store)
         _CheckSystemVersion(store).setServiceParent(service)
         return service
+
     makeService = classmethod(makeService)
 
 

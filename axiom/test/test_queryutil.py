@@ -1,4 +1,3 @@
-
 import random
 
 from twisted.trial.unittest import TestCase
@@ -8,6 +7,7 @@ from axiom.item import Item
 from axiom.attributes import integer
 
 from axiom.queryutil import overlapping, AttributeTuple
+
 
 class Segment(Item):
     typeName = 'test_overlap_segment'
@@ -19,6 +19,7 @@ class Segment(Item):
     def __repr__(self):
         return 'Segment<%d,%d>' % (self.x, self.y)
 
+
 class ABC(Item):
     typeName = 'test_tuple_queries'
     schemaVersion = 1
@@ -27,8 +28,8 @@ class ABC(Item):
     b = integer(allowNone=False)
     c = integer(allowNone=False)
 
-class TestQueryUtilities(TestCase):
 
+class TestQueryUtilities(TestCase):
     def testBetweenQuery(self):
         # From a drawn copy of the docstring:
 
@@ -59,17 +60,21 @@ class TestQueryUtilities(TestCase):
         BL = Segment(store=s, x=B, y=L)
 
         self.assertEquals(
-            list(s.query(Segment,
-                         overlapping(Segment.x,
-                                     Segment.y,
-                                     A, B),
-                         sort=Segment.storeID.asc)),
+            list(
+                s.query(
+                    Segment,
+                    overlapping(Segment.x, Segment.y, A, B),
+                    sort=Segment.storeID.asc,
+                )
+            ),
             [AB, CD, EF, KL, AL, CB, CA, BL],
-            )
+        )
 
-    ('(((A > 2)) '
-     'OR ((A == 2) AND (B > 3)) '
-     'OR ((A == 2) AND (B == 3) AND (C >= 4)))')
+    (
+        '(((A > 2)) '
+        'OR ((A == 2) AND (B > 3)) '
+        'OR ((A == 2) AND (B == 3) AND (C >= 4)))'
+    )
 
     def testTupleQueryWithTuples(self):
         s = Store()
@@ -84,63 +89,60 @@ class TestQueryUtilities(TestCase):
         shuffledL = L[:]
         random.shuffle(shuffledL)
         for a, b, c in shuffledL:
-            ABC(a=a,
-                b=b,
-                c=c,
-                store=s)
+            ABC(a=a, b=b, c=c, store=s)
 
         at = AttributeTuple(ABC.a, ABC.b, ABC.c)
         for comparee in L:
-            qobj = s.query(ABC, at > comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
+            qobj = s.query(
+                ABC,
+                at > comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
             self.assertEquals(
-                L[L.index(comparee) + 1:],
-                [(o.a, o.b, o.c) for o in qobj])
+                L[L.index(comparee) + 1 :], [(o.a, o.b, o.c) for o in qobj]
+            )
 
         for comparee in L:
-            qobj = s.query(ABC, at >= comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
-            self.assertEquals(
-                L[L.index(comparee):],
-                [(o.a, o.b, o.c) for o in qobj])
+            qobj = s.query(
+                ABC,
+                at >= comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
+            self.assertEquals(L[L.index(comparee) :], [(o.a, o.b, o.c) for o in qobj])
 
         for comparee in L:
-            qobj = s.query(ABC, at == comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
-            self.assertEquals(
-                [comparee],
-                [(o.a, o.b, o.c) for o in qobj])
+            qobj = s.query(
+                ABC,
+                at == comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
+            self.assertEquals([comparee], [(o.a, o.b, o.c) for o in qobj])
 
         for comparee in L:
-            qobj = s.query(ABC, at != comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
+            qobj = s.query(
+                ABC,
+                at != comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
             self.assertEquals(
-                L[:L.index(comparee)] + L[L.index(comparee) + 1:],
-                [(o.a, o.b, o.c) for o in qobj])
+                L[: L.index(comparee)] + L[L.index(comparee) + 1 :],
+                [(o.a, o.b, o.c) for o in qobj],
+            )
 
         for comparee in L:
-            qobj = s.query(ABC, at < comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
-            self.assertEquals(
-                L[:L.index(comparee)],
-                [(o.a, o.b, o.c) for o in qobj])
+            qobj = s.query(
+                ABC,
+                at < comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
+            self.assertEquals(L[: L.index(comparee)], [(o.a, o.b, o.c) for o in qobj])
 
         for comparee in L:
-            qobj = s.query(ABC, at <= comparee,
-                           sort=[ABC.a.ascending,
-                                 ABC.b.ascending,
-                                 ABC.c.ascending])
+            qobj = s.query(
+                ABC,
+                at <= comparee,
+                sort=[ABC.a.ascending, ABC.b.ascending, ABC.c.ascending],
+            )
             self.assertEquals(
-                L[:L.index(comparee) + 1],
-                [(o.a, o.b, o.c) for o in qobj])
-
+                L[: L.index(comparee) + 1], [(o.a, o.b, o.c) for o in qobj]
+            )

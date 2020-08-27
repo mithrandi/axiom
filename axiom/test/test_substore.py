@@ -10,13 +10,11 @@ from axiom.substore import SubStore
 from axiom.attributes import text, bytes, boolean, inmemory
 
 
-
 class SubStored(Item):
     schemaVersion = 1
     typeName = 'substoredthing'
     a = text()
     b = bytes()
-
 
 
 class YouCantStartThis(Item, Service):
@@ -30,7 +28,6 @@ class YouCantStartThis(Item, Service):
         self.started = True
 
 
-
 class YouShouldStartThis(Item, Service):
     parent = inmemory()
     running = inmemory()
@@ -42,11 +39,11 @@ class YouShouldStartThis(Item, Service):
         self.started = True
 
 
-
 class SubStoreTest(unittest.TestCase):
     """
     Test on-disk creation of substores.
     """
+
     def testOneThing(self):
         """
         Ensure that items can be inserted into substores and
@@ -72,7 +69,6 @@ class SubStoreTest(unittest.TestCase):
         self.assertEquals(reopenssd.a, u'hello world')
         self.assertEquals(reopenssd.b, 'what, its text')
 
-
     def test_oneThingMemory(self):
         """
         Ensure that items put into in-memory substores are retrievable.
@@ -92,7 +88,6 @@ class SubStoreTest(unittest.TestCase):
         self.assertEquals(item.a, u'hello world')
         self.assertEquals(item.b, 'what, its text')
 
-
     def test_hereTodayGoneTomorrow(self):
         """
         Ensure that substores exist after closing them.
@@ -105,15 +100,14 @@ class SubStoreTest(unittest.TestCase):
         oid = ss.storeID
         oid2 = ssd.storeID
         s2.close()
-        #the following is done to mimic garbage collection of objects holding
-        #on to substores
+        # the following is done to mimic garbage collection of objects holding
+        # on to substores
         del s2._openSubStore
         ss = s.getItemByID(oid)
         s2 = ss.open()
         item = s2.getItemByID(oid2)
         self.assertEquals(item.a, u'hello world')
         self.assertEquals(item.b, 'what, its text')
-
 
     def test_memorySubstoreFile(self):
         """
@@ -129,18 +123,14 @@ class SubStoreTest(unittest.TestCase):
         f.close()
         self.assertEqual(open(f.finalpath.path).read(), "yay")
 
-
     def test_createNewStringPath(self):
         """
         Passing a string instead of a sequence of strings to
         L{SubStore.createNew} results in an exception.
         """
         s = Store()
-        e = self.assertRaises(
-            ValueError, SubStore.createNew, s, 'notasequence')
-        self.assertEqual(
-            e.args[0], "Received 'notasequence' instead of a sequence")
-
+        e = self.assertRaises(ValueError, SubStore.createNew, s, 'notasequence')
+        self.assertEqual(e.args[0], "Received 'notasequence' instead of a sequence")
 
     def test_inheritParentConfiguration(self):
         """
@@ -154,7 +144,6 @@ class SubStoreTest(unittest.TestCase):
         self.assertEqual(s2.journalMode, u'MEMORY')
 
 
-
 class SubStoreStartupSemantics(unittest.TestCase):
     """
     These tests verify that interactions between store and substore services
@@ -162,14 +151,14 @@ class SubStoreStartupSemantics(unittest.TestCase):
     behavior.  Read the code if you are interested in how to get startup
     notifications from substore items.
     """
+
     def setUp(self):
         """
         Set up the tests by creating a store and a substore and opening them
         both.
         """
         self.topdb = topdb = Store(filepath.FilePath(self.mktemp()))
-        self.ssitem = ssitem = SubStore.createNew(
-            topdb, ["dontstartme", "really"])
+        self.ssitem = ssitem = SubStore.createNew(topdb, ["dontstartme", "really"])
         self.ss = ssitem.open()
         self.serviceStarted = False
 

@@ -1,4 +1,3 @@
-
 """
 Helpers for writing Axiom tests.
 """
@@ -10,6 +9,8 @@ from twisted.trial.unittest import SkipTest
 from axiom.store import Store
 
 _theBaseStorePaths = {}
+
+
 def _getBaseStorePath(testCase, creator):
     if creator not in _theBaseStorePaths:
         s = creator(testCase)
@@ -36,21 +37,19 @@ def getPristineStore(testCase, creator):
     return Store(dbdir)
 
 
-
 class CommandStubMixin:
     """
     Pretend to be the parent command for a subcommand.
     """
+
     def getStore(self):
         # fake out "parent" implementation for stuff.
         return self.store
-
 
     def getSynopsis(self):
         return '<CommandStubMixin>'
 
     subCommand = property(lambda self: self.__class__.__name__)
-
 
 
 class CommandStub(object):
@@ -61,18 +60,16 @@ class CommandStub(object):
     @ivar _store: The L{Store} associated which will be supplied to the
         subcommand.
     """
+
     def __init__(self, store, subCommand):
         self._store = store
         self.subCommand = subCommand
 
-
     def getSynopsis(self):
         return "Usage: axiomatic [options]"
 
-
     def getStore(self):
         return self._store
-
 
 
 class QueryCounter:
@@ -121,7 +118,8 @@ class QueryCounter:
             raise SkipTest(
                 "QueryCounter requires PySQLite 2.4 or newer, or a patch "
                 "(see <http://initd.org/tracker/pysqlite/ticket/182>) to "
-                "expose the set_progress_handler API.")
+                "expose the set_progress_handler API."
+            )
         sph(self.progressHandler, 1)
 
     def progressHandler(self):
@@ -137,8 +135,7 @@ class QueryCounter:
         return 0
 
     def reset(self):
-        """Reset the internal counter to 0.
-        """
+        """Reset the internal counter to 0."""
         self.counter = 0
 
     def measure(self, f, *a, **k):

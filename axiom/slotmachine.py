@@ -4,10 +4,12 @@ hyper = super
 
 _NOSLOT = object()
 
+
 class Allowed(object):
     """
     An attribute that's allowed to be set.
     """
+
     def __init__(self, name, default=_NOSLOT):
         self.name = name
         self.default = default
@@ -19,7 +21,10 @@ class Allowed(object):
             return oself.__dict__[self.name]
         if self.default is not _NOSLOT:
             return self.default
-        raise AttributeError("%r object did not have attribute %r" %(oself.__class__.__name__, self.name))
+        raise AttributeError(
+            "%r object did not have attribute %r"
+            % (oself.__class__.__name__, self.name)
+        )
 
     def __delete__(self, oself):
         if self.name not in oself.__dict__:
@@ -32,6 +37,7 @@ class Allowed(object):
 
     def __set__(self, oself, value):
         oself.__dict__[self.name] = value
+
 
 class _SlotMetaMachine(type):
     def __new__(meta, name, bases, dictionary):
@@ -82,9 +88,11 @@ class Attribute(object):
         assert oself is None, "%s: should be masked" % (self.name,)
         return self
 
-_RAISE = object()
-class SetOnce(Attribute):
 
+_RAISE = object()
+
+
+class SetOnce(Attribute):
     def __init__(self, doc='', default=_RAISE):
         Attribute.__init__(self)
         if default is _RAISE:
@@ -94,23 +102,24 @@ class SetOnce(Attribute):
 
     def requiredSlots(self, modname, classname, attrname):
         self.name = attrname
-        t = self.trueattr = ('_' + self.name)
+        t = self.trueattr = '_' + self.name
         yield t
 
     def __set__(self, iself, value):
         if not hasattr(iself, self.trueattr):
             setattr(iself, self.trueattr, value)
         else:
-            raise AttributeError('%s.%s may only be set once' % (
-                    type(iself).__name__, self.name))
+            raise AttributeError(
+                '%s.%s may only be set once' % (type(iself).__name__, self.name)
+            )
 
     def __get__(self, iself, type=None):
         if type is not None and iself is None:
             return self
         return getattr(iself, self.trueattr, *self.default)
 
-class SchemaMetaMachine(_SlotMetaMachine):
 
+class SchemaMetaMachine(_SlotMetaMachine):
     def determineSchema(meta, dictionary):
         attrs = dictionary['__attributes__'] = []
         name = dictionary['__name__']
@@ -171,11 +180,13 @@ class _Strict(object):
         # It wasn't found in the setter cache or it was found to be None,
         # indicating a non-data descriptor which cannot be set.
         raise AttributeError(
-            "%r can't set attribute %r" % (self.__class__.__name__, name))
+            "%r can't set attribute %r" % (self.__class__.__name__, name)
+        )
 
 
 class SchemaMachine(_Strict):
     __metaclass__ = SchemaMetaMachine
+
 
 class SlotMachine(_Strict):
     __metaclass__ = _SlotMetaMachine

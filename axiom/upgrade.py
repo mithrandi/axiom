@@ -10,8 +10,7 @@ from twisted.python.reflect import qual
 from axiom.errors import NoUpgradePathAvailable, UpgraderRecursion
 from axiom.errors import ItemUpgradeError
 from axiom.item import _legacyTypes, _typeNameToMostRecentClass
-from axiom._schema import (
-    CREATE_OBJECTS, CREATE_OBJECTS_IDX, CREATE_TYPES, LATEST_TYPES)
+from axiom._schema import CREATE_OBJECTS, CREATE_OBJECTS_IDX, CREATE_TYPES, LATEST_TYPES
 
 
 _upgradeRegistry = {}
@@ -36,7 +35,6 @@ class _StoreUpgrade(object):
         self._currentlyUpgrading = {}
         self._oldTypesRemaining = []
 
-
     def upgradesPending(self):
         return bool(self._oldTypesRemaining)
 
@@ -45,8 +43,8 @@ class _StoreUpgrade(object):
         doc="""
         Flag indicating whether there any types that still need to be upgraded
         or not.
-        """)
-
+        """,
+    )
 
     def checkUpgradePaths(self):
         """
@@ -62,8 +60,7 @@ class _StoreUpgrade(object):
             # We have to be able to get from oldVersion.schemaVersion to
             # the most recent type.
 
-            currentType = _typeNameToMostRecentClass.get(
-                oldVersion.typeName, None)
+            currentType = _typeNameToMostRecentClass.get(oldVersion.typeName, None)
 
             if currentType is None:
                 # There isn't a current version of this type; it's entirely
@@ -76,25 +73,23 @@ class _StoreUpgrade(object):
 
             while upgver < currentType.schemaVersion:
                 # Do we have enough of the schema present to upgrade?
-                if ((typeInQuestion, upgver)
-                    not in _upgradeRegistry):
+                if (typeInQuestion, upgver) not in _upgradeRegistry:
                     cantUpgradeErrors.append(
-                        "No upgrader present for %s (%s) from %d to %d" % (
-                            typeInQuestion, qual(currentType), upgver,
-                            upgver + 1))
+                        "No upgrader present for %s (%s) from %d to %d"
+                        % (typeInQuestion, qual(currentType), upgver, upgver + 1)
+                    )
 
                 # Is there a type available for each upgrader version?
-                if upgver+1 != currentType.schemaVersion:
-                    if (typeInQuestion, upgver+1) not in _legacyTypes:
+                if upgver + 1 != currentType.schemaVersion:
+                    if (typeInQuestion, upgver + 1) not in _legacyTypes:
                         cantUpgradeErrors.append(
                             "Type schema required for upgrade missing:"
-                            " %s version %d" % (
-                                typeInQuestion, upgver+1))
+                            " %s version %d" % (typeInQuestion, upgver + 1)
+                        )
                 upgver += 1
 
             if cantUpgradeErrors:
                 raise NoUpgradePathAvailable('\n    '.join(cantUpgradeErrors))
-
 
     def queueTypeUpgrade(self, oldtype):
         """
@@ -102,7 +97,6 @@ class _StoreUpgrade(object):
         """
         if oldtype not in self._oldTypesRemaining:
             self._oldTypesRemaining.append(oldtype)
-
 
     def upgradeItem(self, thisItem):
         """
@@ -120,7 +114,6 @@ class _StoreUpgrade(object):
         finally:
             self._currentlyUpgrading.pop(sid)
 
-
     def upgradeEverything(self):
         """
         Upgrade every item in the store, one at a time.
@@ -130,7 +123,6 @@ class _StoreUpgrade(object):
         @return: A generator that yields for each item upgrade.
         """
         return self.upgradeBatch(1)
-
 
     def upgradeBatch(self, n):
         """
@@ -156,8 +148,11 @@ class _StoreUpgrade(object):
                 except:
                     f = Failure()
                     raise ItemUpgradeError(
-                        f, theItem.storeID, itemType,
-                        _typeNameToMostRecentClass[itemType.typeName])
+                        f,
+                        theItem.storeID,
+                        itemType,
+                        _typeNameToMostRecentClass[itemType.typeName],
+                    )
 
             return upgradedAnything
 
@@ -183,7 +178,6 @@ class _StoreUpgrade(object):
                 msg("%s completely upgraded." % (store.dbdir.path,))
 
 
-
 def registerUpgrader(upgrader, typeName, oldVersion, newVersion):
     """
     Register a callable which can perform a schema upgrade between two
@@ -203,6 +197,7 @@ def registerUpgrader(upgrader, typeName, oldVersion, newVersion):
     assert isinstance(typeName, str), "read the doc string"
     _upgradeRegistry[typeName, oldVersion] = upgrader
 
+
 def registerAttributeCopyingUpgrader(itemType, fromVersion, toVersion, postCopy=None):
     """
     Register an upgrader for C{itemType}, from C{fromVersion} to C{toVersion},
@@ -213,13 +208,18 @@ def registerAttributeCopyingUpgrader(itemType, fromVersion, toVersion, postCopy=
     @param postCopy: a callable of one argument
     @return: None
     """
+
     def upgrader(old):
-        newitem = old.upgradeVersion(itemType.typeName, fromVersion, toVersion,
-                                     **dict((str(name), getattr(old, name))
-                                            for (name, _) in old.getSchema()))
+        newitem = old.upgradeVersion(
+            itemType.typeName,
+            fromVersion,
+            toVersion,
+            **dict((str(name), getattr(old, name)) for (name, _) in old.getSchema())
+        )
         if postCopy is not None:
             postCopy(newitem)
         return newitem
+
     registerUpgrader(upgrader, itemType.typeName, fromVersion, toVersion)
 
 
@@ -236,6 +236,7 @@ def registerDeletionUpgrader(itemType, fromVersion, toVersion):
     def upgrader(old):
         old.deleteFromStore()
         return None
+
     registerUpgrader(upgrader, itemType.typeName, fromVersion, toVersion)
 
 
@@ -254,15 +255,16 @@ def upgradeAllTheWay(o):
     return o
 
 
-
 def _hasExplicitOid(store, table):
     """
     Does the given table have an explicit oid column?
     """
-    return any(info[1] == 'oid' for info
-               in store.querySchemaSQL(
-                   'PRAGMA *DATABASE*.table_info({})'.format(table)))
-
+    return any(
+        info[1] == 'oid'
+        for info in store.querySchemaSQL(
+            'PRAGMA *DATABASE*.table_info({})'.format(table)
+        )
+    )
 
 
 def _upgradeTableOid(store, table, createTable, postCreate=lambda: None):
@@ -274,14 +276,15 @@ def _upgradeTableOid(store, table, createTable, postCreate=lambda: None):
     if _hasExplicitOid(store, table):
         return
     store.executeSchemaSQL(
-        'ALTER TABLE *DATABASE*.{0} RENAME TO {0}_temp'.format(table))
+        'ALTER TABLE *DATABASE*.{0} RENAME TO {0}_temp'.format(table)
+    )
     createTable()
     store.executeSchemaSQL(
         'INSERT INTO *DATABASE*.{0} '
-        'SELECT oid, * FROM *DATABASE*.{0}_temp'.format(table))
+        'SELECT oid, * FROM *DATABASE*.{0}_temp'.format(table)
+    )
     store.executeSchemaSQL('DROP TABLE *DATABASE*.{0}_temp'.format(table))
     postCreate()
-
 
 
 def upgradeSystemOid(store):
@@ -289,19 +292,24 @@ def upgradeSystemOid(store):
     Upgrade the system tables to use explicit oid columns.
     """
     store.transact(
-        _upgradeTableOid, store, 'axiom_types',
-        lambda: store.executeSchemaSQL(CREATE_TYPES))
+        _upgradeTableOid,
+        store,
+        'axiom_types',
+        lambda: store.executeSchemaSQL(CREATE_TYPES),
+    )
     store.transact(
-        _upgradeTableOid, store, 'axiom_objects',
+        _upgradeTableOid,
+        store,
+        'axiom_objects',
         lambda: store.executeSchemaSQL(CREATE_OBJECTS),
-        lambda: store.executeSchemaSQL(CREATE_OBJECTS_IDX))
-
+        lambda: store.executeSchemaSQL(CREATE_OBJECTS_IDX),
+    )
 
 
 def upgradeExplicitOid(store):
     """
     Upgrade a store to use explicit oid columns.
-    
+
     This allows VACUUMing the database without corrupting it.
 
     This requires copying all of axiom_objects and axiom_types, as well as all
@@ -314,23 +322,30 @@ def upgradeExplicitOid(store):
         if cls.schemaVersion != version:
             remaining = store.querySQL(
                 'SELECT oid FROM {} LIMIT 1'.format(
-                    store._tableNameFor(typename, version)))
+                    store._tableNameFor(typename, version)
+                )
+            )
             if len(remaining) == 0:
                 # Nothing to upgrade
                 continue
             else:
                 raise RuntimeError(
                     '{}:{} not fully upgraded to {}'.format(
-                        typename, version, cls.schemaVersion))
+                        typename, version, cls.schemaVersion
+                    )
+                )
         store.transact(
             _upgradeTableOid,
             store,
             store._tableNameOnlyFor(typename, version),
             lambda: store._justCreateTable(cls),
-            lambda: store._createIndexesFor(cls, []))
-
+            lambda: store._createIndexesFor(cls, []),
+        )
 
 
 __all__ = [
-    'registerUpgrader', 'registerAttributeCopyingUpgrader',
-    'registerDeletionUpgrader', 'upgradeExplicitOid']
+    'registerUpgrader',
+    'registerAttributeCopyingUpgrader',
+    'registerDeletionUpgrader',
+    'upgradeExplicitOid',
+]

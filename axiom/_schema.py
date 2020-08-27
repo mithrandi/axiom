@@ -1,10 +1,8 @@
-
 # DELETE_OBJECT = 'DELETE FROM "axiom_objects" WHERE "oid" = ?'
 CREATE_OBJECT = 'INSERT INTO "*DATABASE*"."axiom_objects" ("type_id") VALUES (?)'
 CREATE_TYPE = 'INSERT INTO "*DATABASE*"."axiom_types" ("typename", "module", "version") VALUES (?, ?, ?)'
 
 GET_TABLE_INFO = 'PRAGMA *DATABASE*.table_info(?)'
-
 
 
 # The storeID for an object must be unique over the lifetime of the store.
@@ -49,8 +47,7 @@ CREATE TABLE "*DATABASE*"."axiom_attributes" (
 )
 """
 
-BASE_SCHEMA = [
-    CREATE_OBJECTS, CREATE_OBJECTS_IDX, CREATE_TYPES, CREATE_ATTRIBUTES]
+BASE_SCHEMA = [CREATE_OBJECTS, CREATE_OBJECTS_IDX, CREATE_TYPES, CREATE_ATTRIBUTES]
 
 
 TYPEOF_QUERY = """
@@ -60,25 +57,34 @@ SELECT "*DATABASE*"."axiom_types"."typename", "*DATABASE*"."axiom_types"."module
         AND "*DATABASE*"."axiom_types"."oid" = "*DATABASE*"."axiom_objects"."type_id"
 """
 
-HAS_SCHEMA_FEATURE = ('SELECT COUNT("oid") FROM "*DATABASE*"."sqlite_master" '
-                      'WHERE "type" = ? AND "name" = ?')
+HAS_SCHEMA_FEATURE = (
+    'SELECT COUNT("oid") FROM "*DATABASE*"."sqlite_master" '
+    'WHERE "type" = ? AND "name" = ?'
+)
 
-IDENTIFYING_SCHEMA = ('SELECT "indexed", "sqltype", "allow_none", "attribute" '
-                      'FROM "*DATABASE*"."axiom_attributes" WHERE "type_id" = ? '
-                      'ORDER BY "row_offset"')
+IDENTIFYING_SCHEMA = (
+    'SELECT "indexed", "sqltype", "allow_none", "attribute" '
+    'FROM "*DATABASE*"."axiom_attributes" WHERE "type_id" = ? '
+    'ORDER BY "row_offset"'
+)
 
 ADD_SCHEMA_ATTRIBUTE = (
     'INSERT INTO "*DATABASE*"."axiom_attributes" '
     '("type_id", "row_offset", "indexed", "sqltype", "allow_none", "attribute", "docstring", "pythontype") '
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+)
 
-ALL_TYPES = 'SELECT "oid", "module", "typename", "version" FROM "*DATABASE*"."axiom_types"'
+ALL_TYPES = (
+    'SELECT "oid", "module", "typename", "version" FROM "*DATABASE*"."axiom_types"'
+)
 
 
 LATEST_TYPES = 'SELECT "typename", MAX("version") FROM "*DATABASE*"."axiom_types" GROUP BY "typename"'
 
-GET_GREATER_VERSIONS_OF_TYPE = ('SELECT "version" FROM "*DATABASE*"."axiom_types" '
-                                'WHERE "typename" = ? AND "version" > ?')
+GET_GREATER_VERSIONS_OF_TYPE = (
+    'SELECT "version" FROM "*DATABASE*"."axiom_types" '
+    'WHERE "typename" = ? AND "version" > ?'
+)
 
 PERSISTED_SCHEMA = """
 SELECT "attribute", "type_id", "sqltype", "indexed", "pythontype", "docstring"
@@ -88,4 +94,3 @@ SELECT "attribute", "type_id", "sqltype", "indexed", "pythontype", "docstring"
 CHANGE_TYPE = 'UPDATE "*DATABASE*"."axiom_objects" SET "type_id" = ? WHERE "oid" = ?'
 
 APP_VACUUM = 'DELETE FROM "*DATABASE*"."axiom_objects" WHERE ("type_id" == -1) AND ("oid" != (SELECT MAX("oid") from "*DATABASE*"."axiom_objects"))'
-

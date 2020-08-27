@@ -1,6 +1,6 @@
-
 from axiom.test.historic.stubloader import StubbedTest
 from axiom.test.historic.stub_textlist import Dummy
+
 
 class TextlistTransitionTest(StubbedTest):
     def test_transition(self):

@@ -1,4 +1,3 @@
-
 """
 This module contains tests for C{__repr__} implementations within Axiom, to
 make sure they contain enough information to be useful, and work when objects
@@ -12,14 +11,17 @@ from axiom.store import Store
 
 from twisted.trial.unittest import TestCase
 
+
 class ReprTesterItemClass(Item):
     intattr = integer()
     txtattr = text()
+
 
 class ReprTesterWithReference(Item):
     """
     Test fixture for testing 'reference' attributes.
     """
+
     refattr = reference()
 
 
@@ -39,18 +41,15 @@ class BasicInformation(TestCase):
         self.assertIn(ReprTesterItemClass.__name__, R)
         self.assertNotIn('intattr', R)
 
-
     def test_query(self):
         """
         Verify that queries tell you something about their target and
         comparison.
         """
         s = Store()
-        R = repr(s.query(ReprTesterItemClass,
-                         ReprTesterItemClass.intattr == 1))
+        R = repr(s.query(ReprTesterItemClass, ReprTesterItemClass.intattr == 1))
         self.assertIn('intattr', R)
         self.assertIn(ReprTesterItemClass.__name__, R)
-
 
     def test_simpleOrdering(self):
         """
@@ -58,19 +57,24 @@ class BasicInformation(TestCase):
         """
         R = repr(ReprTesterItemClass.intattr.ascending)
         self.assertIn("intattr", R)
-        self.assertIn("asc", R.lower()) # leaving this a little open-ended so
-                                        # that we can fiddle with case, ASC and
-                                        # DESC vs. ascending and descending
+        self.assertIn("asc", R.lower())  # leaving this a little open-ended so
+        # that we can fiddle with case, ASC and
+        # DESC vs. ascending and descending
 
     def test_complexOrdering(self):
         """
         Verify that complex orderings tell us about their component parts.
         """
-        R = repr(IOrdering((ReprTesterItemClass.intattr.ascending,
-                            ReprTesterItemClass.txtattr.descending)))
+        R = repr(
+            IOrdering(
+                (
+                    ReprTesterItemClass.intattr.ascending,
+                    ReprTesterItemClass.txtattr.descending,
+                )
+            )
+        )
         self.assertIn(repr(ReprTesterItemClass.intattr.ascending), R)
         self.assertIn(repr(ReprTesterItemClass.txtattr.descending), R)
-
 
     def test_referenceAttribute(self):
         """
@@ -83,7 +87,6 @@ class BasicInformation(TestCase):
         R = repr(i1)
         self.assertIn("reference(%d)" % (i2.storeID,), R)
 
-
     def test_recursiveReferenceAttribute(self):
         """
         Verify that repr()ing an object with reference attributes that refer to
@@ -95,7 +98,6 @@ class BasicInformation(TestCase):
         R = repr(i1)
         self.assertIn("reference(%d)" % (i1.storeID,), R)
 
-
     def test_unstoredReferenceAttribute(self):
         """
         Verify that repr()ing an object with reference attributes that refer to
@@ -106,5 +108,3 @@ class BasicInformation(TestCase):
         i1.refattr = i2
         R = repr(i1)
         self.assertIn("reference(unstored@%d)" % (id(i2),), R)
-
-

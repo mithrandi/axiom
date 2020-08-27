@@ -11,13 +11,13 @@ from axiom.dependency import installOn
 from axiom.scheduler import Scheduler, _SubSchedulerParentHook
 from axiom.substore import SubStore
 
+
 def createDatabase(store):
     scheduler = Scheduler(store=store)
     installOn(scheduler, store)
     installOn(
-        _SubSchedulerParentHook(
-            store=store, loginAccount=SubStore(store=store)),
-        store)
+        _SubSchedulerParentHook(store=store, loginAccount=SubStore(store=store)), store
+    )
 
 
 if __name__ == '__main__':

@@ -6,9 +6,11 @@ from axiom.item import Item
 
 from axiom.upgrade import registerAttributeCopyingUpgrader
 
+
 class Path(Item):
     schemaVersion = 2
     typeName = 'test_upgrade_path'
     thePath = path()
+
 
 registerAttributeCopyingUpgrader(Path, 1, 2)

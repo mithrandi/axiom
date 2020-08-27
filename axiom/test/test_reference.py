@@ -8,11 +8,13 @@ from axiom.item import Item, declareLegacyItem
 from axiom.attributes import integer, reference
 from axiom.errors import BrokenReference, DeletionDisallowed
 
+
 class Referee(Item):
     schemaVersion = 1
     typeName = "test_reference_referee"
 
     topSecret = integer()
+
 
 class SimpleReferent(Item):
     schemaVersion = 1
@@ -27,11 +29,14 @@ class BreakingReferent(Item):
 
     ref = reference(whenDeleted=reference.NULLIFY)
 
+
 class DependentReferent(Item):
     ref = reference(whenDeleted=reference.CASCADE, reftype=Referee)
 
+
 class DisallowReferent(Item):
     ref = reference(whenDeleted=reference.DISALLOW, reftype=Referee)
+
 
 class BadReferenceTestCase(TestCase):
     ntimes = 10
@@ -79,7 +84,6 @@ class BadReferenceTestCase(TestCase):
         (referent,) = list(store.query(SimpleReferent))
         self.assertEqual(referent.ref, None)
 
-
     def test_brokenReferenceException(self):
         """
         Test that an exception is raised when a broken reference is detected
@@ -98,15 +102,16 @@ class BadReferenceTestCase(TestCase):
         self.patch(BreakingReferent.ref, 'whenDeleted', reference.CASCADE)
         self.assertRaises(BrokenReference, lambda: referent.ref)
 
-
     def testBadReferenceNoneRevert(self):
         store = Store()
         referee = Referee(store=store, topSecret=0)
         referent = SimpleReferent(store=store, ref=referee)
+
         def txn():
             referee.deleteFromStore()
             self.assertEqual(referent.ref, None)
             1 / 0
+
         self.assertRaises(ZeroDivisionError, store.transact, txn)
         self.assertEqual(referent.ref, referee)
 
@@ -134,17 +139,15 @@ class BadReferenceTestCase(TestCase):
         store = Store()
         referee = Referee(store=store, topSecret=0)
         self.assertEqual(
-            list(store.query(SimpleReferent,
-                             SimpleReferent.ref == Referee.storeID)),
-            [])
+            list(store.query(SimpleReferent, SimpleReferent.ref == Referee.storeID)), []
+        )
 
     def testReferenceDeletion(self):
         store = Store()
         referee = Referee(store=store, topSecret=0)
-        dep = DependentReferent(store=store,
-                                ref=referee)
+        dep = DependentReferent(store=store, ref=referee)
         sid = dep.storeID
-        self.assertIdentical(store.getItemByID(sid), dep) # sanity
+        self.assertIdentical(store.getItemByID(sid), dep)  # sanity
         referee.deleteFromStore()
         self.assertRaises(KeyError, store.getItemByID, sid)
 
@@ -154,12 +157,10 @@ class BadReferenceTestCase(TestCase):
         """
         store = Store()
         referee = Referee(store=store, topSecret=0)
-        dep = DependentReferent(store=store,
-                                ref=referee)
+        dep = DependentReferent(store=store, ref=referee)
         sid = dep.storeID
         store.query(Referee).deleteFromStore()
         self.assertRaises(KeyError, store.getItemByID, sid)
-
 
     def test_dummyItemReference(self):
         """
@@ -174,10 +175,9 @@ class BadReferenceTestCase(TestCase):
         newReferee = referent.ref
         self.assertTrue(
             isinstance(newReferee, UpgradedItem),
-            "%r was instance of %r, expected %r" % (newReferee,
-                                                    type(newReferee),
-                                                    UpgradedItem))
-
+            "%r was instance of %r, expected %r"
+            % (newReferee, type(newReferee), UpgradedItem),
+        )
 
     def test_dummyItemReferenceUpgraded(self):
         """
@@ -198,23 +198,23 @@ class BadReferenceTestCase(TestCase):
         self.assertIsInstance(newReferee, UpgradedItem)
         self.assertIdentical(referent.ref, newReferee)
 
-
     def test_dummyItemReferenceInUpgrade(self):
         """
         Setting the value of a reference attribute to a legacy item during an
         upgrade results in the same value being set on the upgraded item.
         """
         store = Store()
+
         def tx():
             oldReferent = nonUpgradedItem(store=store)
             oldReferee = nonUpgradedItem(store=store)
-            newReferent = oldReferent.upgradeVersion(
-                UpgradedItem.typeName, 1, 2)
+            newReferent = oldReferent.upgradeVersion(UpgradedItem.typeName, 1, 2)
             newReferee = oldReferee.upgradeVersion(
-                UpgradedItem.typeName, 1, 2, ref=newReferent)
+                UpgradedItem.typeName, 1, 2, ref=newReferent
+            )
             self.assertIdentical(newReferee.ref, newReferent)
-        store.transact(tx)
 
+        store.transact(tx)
 
     def test_dummyItemGetItemByID(self):
         """
@@ -230,25 +230,19 @@ class BadReferenceTestCase(TestCase):
         self.assertTrue(isinstance(t2, UpgradedItem))
 
 
-
 class UpgradedItem(Item):
     """
     A simple item which is the current version of L{nonUpgradedItem}.
     """
+
     schemaVersion = 3
     ref = reference()
 
 
-
-nonUpgradedItem = declareLegacyItem(
-    UpgradedItem.typeName, 1,
-    dict(ref=reference()))
+nonUpgradedItem = declareLegacyItem(UpgradedItem.typeName, 1, dict(ref=reference()))
 
 
-
-nonUpgradedItem2 = declareLegacyItem(
-    UpgradedItem.typeName, 2,
-    dict(ref=reference()))
+nonUpgradedItem2 = declareLegacyItem(UpgradedItem.typeName, 2, dict(ref=reference()))
 
 registerAttributeCopyingUpgrader(UpgradedItem, 1, 2)
 
@@ -258,5 +252,6 @@ def item2to3(old):
     Upgrade an nonUpgradedItem to UpgradedItem
     """
     return old.upgradeVersion(UpgradedItem.typeName, 2, 3, ref=old.ref)
+
 
 registerUpgrader(item2to3, UpgradedItem.typeName, 2, 3)

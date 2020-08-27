@@ -1,4 +1,3 @@
-
 from twisted.cred.portal import Portal, IRealm
 
 from twisted.cred.checkers import ICredentialsChecker
@@ -11,10 +10,10 @@ from axiom.test.historic import stubloader
 CREDENTIALS = (u'test', u'example.com', 'secret')
 GARBAGE_LEVEL = 26
 
+
 class LoginMethodUpgradeTest(stubloader.StubbedTest):
     def testUpgrade(self):
-        p = Portal(IRealm(self.store),
-                   [ICredentialsChecker(self.store)])
+        p = Portal(IRealm(self.store), [ICredentialsChecker(self.store)])
 
         def loggedIn((interface, avatarAspect, logout)):
             # if we can login, i guess everything is fine

@@ -14,8 +14,9 @@ from axiom.item import Item
 from axiom.attributes import reference, boolean, AND
 from axiom.errors import ItemNotFound, DependencyError, UnsatisfiedRequirement
 
-#There is probably a cleaner way to do this.
+# There is probably a cleaner way to do this.
 _globalDependencyMap = {}
+
 
 def dependentsOf(cls):
     deps = _globalDependencyMap.get(cls, None)
@@ -24,10 +25,13 @@ def dependentsOf(cls):
     else:
         return [d[0] for d in deps]
 
+
 ##Totally ripping off z.i
 
-def dependsOn(itemType, itemCustomizer=None, doc='',
-              indexed=True, whenDeleted=reference.NULLIFY):
+
+def dependsOn(
+    itemType, itemCustomizer=None, doc='', indexed=True, whenDeleted=reference.NULLIFY
+):
     """
     This function behaves like L{axiom.attributes.reference} but with
     an extra behaviour: when this item is installed (via
@@ -55,40 +59,52 @@ def dependsOn(itemType, itemCustomizer=None, doc='',
     # Try to make sure we were called from a class def.
     if (locals is frame.f_globals) or ('__module__' not in locals):
         raise TypeError("dependsOn can be used only from a class definition.")
-    ref = reference(reftype=itemType, doc=doc, indexed=indexed, allowNone=True,
-                    whenDeleted=whenDeleted)
+    ref = reference(
+        reftype=itemType,
+        doc=doc,
+        indexed=indexed,
+        allowNone=True,
+        whenDeleted=whenDeleted,
+    )
     if "__dependsOn_advice_data__" not in locals:
         addClassAdvisor(_dependsOn_advice)
     locals.setdefault('__dependsOn_advice_data__', []).append(
-    (itemType, itemCustomizer, ref))
+        (itemType, itemCustomizer, ref)
+    )
     return ref
+
 
 def _dependsOn_advice(cls):
     if cls in _globalDependencyMap:
         print "Double advising of %s. dependency map from first time: %s" % (
-            cls, _globalDependencyMap[cls])
-        #bail if we end up here twice, somehow
+            cls,
+            _globalDependencyMap[cls],
+        )
+        # bail if we end up here twice, somehow
         return cls
-    for itemType, itemCustomizer, ref in cls.__dict__[
-        '__dependsOn_advice_data__']:
+    for itemType, itemCustomizer, ref in cls.__dict__['__dependsOn_advice_data__']:
         classDependsOn(cls, itemType, itemCustomizer, ref)
     del cls.__dependsOn_advice_data__
     return cls
 
+
 def classDependsOn(cls, itemType, itemCustomizer, ref):
-    _globalDependencyMap.setdefault(cls, []).append(
-        (itemType, itemCustomizer, ref))
+    _globalDependencyMap.setdefault(cls, []).append((itemType, itemCustomizer, ref))
+
 
 class _DependencyConnector(Item):
     """
     I am a connector between installed items and their targets.
     """
+
     installee = reference(doc="The item installed.")
     target = reference(doc="The item installed upon.")
-    explicitlyInstalled = boolean(doc="Whether this item was installed"
-                                  "explicitly (and thus whether or not it"
-                                  "should be automatically uninstalled when"
-                                  "nothing depends on it)")
+    explicitlyInstalled = boolean(
+        doc="Whether this item was installed"
+        "explicitly (and thus whether or not it"
+        "should be automatically uninstalled when"
+        "nothing depends on it)"
+    )
 
 
 def installOn(self, target):
@@ -104,48 +120,55 @@ def installOn(self, target):
 
 def _installOn(self, target, __explicitlyInstalled=False):
     depBlob = _globalDependencyMap.get(self.__class__, [])
-    dependencies, itemCustomizers, refs = (map(list, zip(*depBlob))
-                                         or ([], [], []))
-    #See if any of our dependencies have been installed already
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target == target):
+    dependencies, itemCustomizers, refs = map(list, zip(*depBlob)) or ([], [], [])
+    # See if any of our dependencies have been installed already
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
         if dc.installee.__class__ in dependencies:
             i = dependencies.index(dc.installee.__class__)
             refs[i].__set__(self, dc.installee)
             del dependencies[i], itemCustomizers[i], refs[i]
-        if (dc.installee.__class__ == self.__class__
-            and self.__class__ in set(
-            itertools.chain([blob[0][0] for blob in
-                             _globalDependencyMap.values()]))):
-            #Somebody got here before we did... let's punt
-            raise DependencyError("An instance of %r is already "
-                                  "installed on %r." % (self.__class__,
-                                                        target))
-    #The rest we'll install
+        if dc.installee.__class__ == self.__class__ and self.__class__ in set(
+            itertools.chain([blob[0][0] for blob in _globalDependencyMap.values()])
+        ):
+            # Somebody got here before we did... let's punt
+            raise DependencyError(
+                "An instance of %r is already "
+                "installed on %r." % (self.__class__, target)
+            )
+    # The rest we'll install
     for i, cls in enumerate(dependencies):
         it = cls(store=self.store)
         if itemCustomizers[i] is not None:
             itemCustomizers[i](it)
         _installOn(it, target, False)
         refs[i].__set__(self, it)
-    #And now the connector for our own dependency.
+    # And now the connector for our own dependency.
 
     dc = self.store.findUnique(
         _DependencyConnector,
-        AND(_DependencyConnector.target==target,
-            _DependencyConnector.installee==self,
-            _DependencyConnector.explicitlyInstalled==__explicitlyInstalled),
-        None)
+        AND(
+            _DependencyConnector.target == target,
+            _DependencyConnector.installee == self,
+            _DependencyConnector.explicitlyInstalled == __explicitlyInstalled,
+        ),
+        None,
+    )
     assert dc is None, "Dependency connector already exists, wtf are you doing?"
-    _DependencyConnector(store=self.store, target=target,
-                         installee=self,
-                         explicitlyInstalled=__explicitlyInstalled)
+    _DependencyConnector(
+        store=self.store,
+        target=target,
+        installee=self,
+        explicitlyInstalled=__explicitlyInstalled,
+    )
 
     target.powerUp(self)
 
     callback = getattr(self, "installed", None)
     if callback is not None:
         callback()
+
 
 def uninstallFrom(self, target):
     """
@@ -155,12 +178,12 @@ def uninstallFrom(self, target):
     anything still depends on this.
     """
 
-    #did this class powerup on any interfaces? powerdown if so.
+    # did this class powerup on any interfaces? powerdown if so.
     target.powerDown(self)
 
-
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target==target):
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
         if dc.installee is self:
             dc.deleteFromStore()
 
@@ -171,15 +194,16 @@ def uninstallFrom(self, target):
     if callback is not None:
         callback()
 
+
 def installedOn(self):
     """
     If this item is installed on another item, return the install
     target. Otherwise return None.
     """
     try:
-        return self.store.findUnique(_DependencyConnector,
-                                     _DependencyConnector.installee == self
-                                     ).target
+        return self.store.findUnique(
+            _DependencyConnector, _DependencyConnector.installee == self
+        ).target
     except ItemNotFound:
         return None
 
@@ -189,11 +213,13 @@ def installedDependents(self, target):
     Return an iterable of things installed on the target that
     require this item.
     """
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target == target):
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
         depends = dependentsOf(dc.installee.__class__)
         if self.__class__ in depends:
             yield dc.installee
+
 
 def installedUniqueRequirements(self, target):
     """
@@ -202,29 +228,32 @@ def installedUniqueRequirements(self, target):
     """
 
     myDepends = dependentsOf(self.__class__)
-    #XXX optimize?
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target==target):
+    # XXX optimize?
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
         if dc.installee is self:
-            #we're checking all the others not ourself
+            # we're checking all the others not ourself
             continue
         depends = dependentsOf(dc.installee.__class__)
         if self.__class__ in depends:
             raise DependencyError(
                 "%r cannot be uninstalled from %r, "
-                "%r still depends on it" % (self, target, dc.installee))
+                "%r still depends on it" % (self, target, dc.installee)
+            )
 
         for cls in myDepends[:]:
-            #If one of my dependencies is required by somebody
-            #else, leave it alone
+            # If one of my dependencies is required by somebody
+            # else, leave it alone
             if cls in depends:
                 myDepends.remove(cls)
 
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target==target):
-        if (dc.installee.__class__ in myDepends
-            and not dc.explicitlyInstalled):
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
+        if dc.installee.__class__ in myDepends and not dc.explicitlyInstalled:
             yield dc.installee
+
 
 def installedRequirements(self, target):
     """
@@ -232,11 +261,11 @@ def installedRequirements(self, target):
     item requires.
     """
     myDepends = dependentsOf(self.__class__)
-    for dc in self.store.query(_DependencyConnector,
-                               _DependencyConnector.target == target):
+    for dc in self.store.query(
+        _DependencyConnector, _DependencyConnector.target == target
+    ):
         if dc.installee.__class__ in myDepends:
             yield dc.installee
-
 
 
 def onlyInstallPowerups(self, target):
@@ -246,11 +275,13 @@ def onlyInstallPowerups(self, target):
     target.powerUp(self)
 
 
-
 class requiresFromSite(
-    record('powerupInterface defaultFactory siteDefaultFactory',
-           defaultFactory=None,
-           siteDefaultFactory=None)):
+    record(
+        'powerupInterface defaultFactory siteDefaultFactory',
+        defaultFactory=None,
+        siteDefaultFactory=None,
+    )
+):
     """
     A read-only descriptor that will return the site store's powerup for a
     given item.
@@ -273,7 +304,6 @@ class requiresFromSite(
             raise UnsatisfiedRequirement()
         return defaultFactory(siteStore)
 
-
     def __get__(self, oself, type=None):
         """
         Retrieve the value of this dependency from the site store.
@@ -286,4 +316,3 @@ class requiresFromSite(
         else:
             pi = self._invokeFactory(self.siteDefaultFactory, oself.store)
         return pi
-

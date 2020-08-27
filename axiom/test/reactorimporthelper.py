@@ -12,6 +12,6 @@ from twisted.internet import reactor
 from axiom.item import Item
 from axiom.attributes import integer
 
+
 class SomeItem(Item):
     attribute = integer()
-

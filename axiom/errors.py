@@ -11,6 +11,7 @@ class TimeoutError(Exception):
     @ivar timeout: The timeout, in seconds, which was exceeded.
     @ivar underlying: The backend exception which signaled this, or None.
     """
+
     def __init__(self, statement, timeout, underlying):
         Exception.__init__(self, statement, timeout, underlying)
         self.statement = statement
@@ -18,15 +19,12 @@ class TimeoutError(Exception):
         self.underlying = underlying
 
 
-
 class BadCredentials(UnauthorizedLogin):
     pass
 
 
-
 class NoSuchUser(UnauthorizedLogin):
     pass
-
 
 
 class MissingDomainPart(NoSuchUser):
@@ -40,12 +38,10 @@ class DuplicateUser(Exception):
     pass
 
 
-
 class CannotOpenStore(RuntimeError):
     """
     There is a problem such that the store cannot be opened.
     """
-
 
 
 class NoUpgradePathAvailable(CannotOpenStore):
@@ -54,26 +50,28 @@ class NoUpgradePathAvailable(CannotOpenStore):
     """
 
 
-
 class NoCrossStoreReferences(AttributeError):
     """
     References are not allowed between items within different Stores.
     """
 
 
-
 class SQLError(RuntimeError):
     """
     Axiom internally generated some bad SQL.
     """
+
     def __init__(self, sql, args, underlying):
         RuntimeError.__init__(self, sql, args, underlying)
         self.sql, self.args, self.underlying = self.args
 
     def __str__(self):
         return "<SQLError: %r(%r) caused %s: %s>" % (
-            self.sql, self.args,
-            self.underlying.__class__, self.underlying)
+            self.sql,
+            self.args,
+            self.underlying.__class__,
+            self.underlying,
+        )
 
 
 class TableAlreadyExists(SQLError):
@@ -83,12 +81,10 @@ class TableAlreadyExists(SQLError):
     """
 
 
-
 class UnknownItemType(Exception):
     """
     Can't load an item: it's of a type that I don't see anywhere in Python.
     """
-
 
 
 class SQLWarning(Warning):
@@ -97,12 +93,10 @@ class SQLWarning(Warning):
     """
 
 
-
 class TableCreationConcurrencyError(RuntimeError):
     """
     Woah, this is really bad.  If you can get this please tell us how.
     """
-
 
 
 class DuplicateUniqueItem(KeyError):
@@ -111,12 +105,10 @@ class DuplicateUniqueItem(KeyError):
     """
 
 
-
 class ItemNotFound(KeyError):
     """
     Did not find even 1 of an item which was supposed to exist.
     """
-
 
 
 class ItemClassesOnly(TypeError):
@@ -134,10 +126,12 @@ class ChangeRejected(Exception):
     attempts to change database state.
     """
 
+
 class DependencyError(Exception):
     """
     Raised when an item can't be installed or uninstalled.
     """
+
 
 class DeletionDisallowed(ValueError):
     """
@@ -145,11 +139,11 @@ class DeletionDisallowed(ValueError):
     reference attributes with whenDeleted == DISALLOW.
     """
 
+
 class DataIntegrityError(RuntimeError):
     """
     Data integrity seems to have been lost.
     """
-
 
 
 class BrokenReference(DataIntegrityError):
@@ -159,12 +153,10 @@ class BrokenReference(DataIntegrityError):
     """
 
 
-
 class UpgraderRecursion(RuntimeError):
     """
     Upgraders are not allowed to recurse.
     """
-
 
 
 class ItemUpgradeError(RuntimeError):
@@ -176,13 +168,13 @@ class ItemUpgradeError(RuntimeError):
     @ivar oldType: The type of the item being upgraded
     @ivar newType: The type the item should've been upgraded to
     """
+
     def __init__(self, originalFailure, storeID, oldType, newType):
         RuntimeError.__init__(self, originalFailure, storeID, oldType, newType)
         self.originalFailure = originalFailure
         self.storeID = storeID
         self.oldType = oldType
         self.newType = newType
-
 
 
 class UnsatisfiedRequirement(AttributeError):

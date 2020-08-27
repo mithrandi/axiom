@@ -1,5 +1,6 @@
 from twisted.trial.unittest import TestCase
 
+
 class UnavailableTypeTestCase(TestCase):
     def testUnavailable(self):
         from axiom import attributes, item, store

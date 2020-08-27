@@ -4,25 +4,23 @@ import operator
 
 from axiom.attributes import AND, OR
 
-def contains(startAttribute,
-             endAttribute,
-             value):
+
+def contains(startAttribute, endAttribute, value):
     """
     Return an L{axiom.iaxiom.IComparison} (an object that can be
     passed as the 'comparison' argument to Store.query/.sum/.count)
     which will constrain a query against 2 attributes for ranges which
     contain the given argument.  The range is half-open.
     """
-    return AND(
-        startAttribute <= value,
-        value < endAttribute)
+    return AND(startAttribute <= value, value < endAttribute)
 
 
-def overlapping(startAttribute, # X
-                endAttribute,   # Y
-                startValue,     # A
-                endValue,       # B
-                ):
+def overlapping(
+    startAttribute,  # X
+    endAttribute,  # Y
+    startValue,  # A
+    endValue,  # B
+):
     """
     Return an L{axiom.iaxiom.IComparison} (an object that can be passed as the
     'comparison' argument to Store.query/.sum/.count) which will constrain a
@@ -79,18 +77,13 @@ def overlapping(startAttribute, # X
     assert startValue <= endValue
 
     return OR(
-        AND(startAttribute >= startValue,
-            startAttribute <= endValue),
-        AND(endAttribute >= startValue,
-            endAttribute <= endValue),
-        AND(startAttribute <= startValue,
-            endAttribute >= endValue)
-        )
+        AND(startAttribute >= startValue, startAttribute <= endValue),
+        AND(endAttribute >= startValue, endAttribute <= endValue),
+        AND(startAttribute <= startValue, endAttribute >= endValue),
+    )
 
-def _tupleCompare(tuple1, ineq, tuple2,
-                 eq=lambda a,b: (a==b),
-                 ander=AND,
-                 orer=OR):
+
+def _tupleCompare(tuple1, ineq, tuple2, eq=lambda a, b: (a == b), ander=AND, orer=OR):
     """
     Compare two 'in-database tuples'.  Useful when sorting by a compound key
     and slicing into the middle of that query.
@@ -99,16 +92,20 @@ def _tupleCompare(tuple1, ineq, tuple2,
     orholder = []
     for limit in range(len(tuple1)):
         eqconstraint = [
-            eq(elem1, elem2) for elem1, elem2 in zip(tuple1, tuple2)[:limit]]
+            eq(elem1, elem2) for elem1, elem2 in zip(tuple1, tuple2)[:limit]
+        ]
         ineqconstraint = ineq(tuple1[limit], tuple2[limit])
         orholder.append(ander(*(eqconstraint + [ineqconstraint])))
     return orer(*orholder)
 
+
 def _tupleLessThan(tuple1, tuple2):
     return _tupleCompare(tuple1, operator.lt, tuple2)
 
+
 def _tupleGreaterThan(tuple1, tuple2):
     return _tupleCompare(tuple1, operator.gt, tuple2)
+
 
 class AttributeTuple(object):
     def __init__(self, *attributes):
@@ -120,18 +117,12 @@ class AttributeTuple(object):
     def __eq__(self, other):
         if not isinstance(other, (AttributeTuple, tuple, list)):
             return NotImplemented
-        return AND(*[
-                myAttr == otherAttr
-                for (myAttr, otherAttr)
-                in zip(self, other)])
+        return AND(*[myAttr == otherAttr for (myAttr, otherAttr) in zip(self, other)])
 
     def __ne__(self, other):
         if not isinstance(other, (AttributeTuple, tuple, list)):
             return NotImplemented
-        return OR(*[
-                myAttr != otherAttr
-                for (myAttr, otherAttr)
-                in zip(self, other)])
+        return OR(*[myAttr != otherAttr for (myAttr, otherAttr) in zip(self, other)])
 
     def __gt__(self, other):
         if not isinstance(other, (AttributeTuple, tuple, list)):

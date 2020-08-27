@@ -5,8 +5,10 @@ from axiom.dependency import installOn
 from axiom.batch import BatchManholePowerup
 from axiom.test.historic.stubloader import saveStub
 
+
 def createDatabase(store):
     installOn(BatchManholePowerup(store=store), store)
+
 
 if __name__ == '__main__':
     saveStub(createDatabase, 16829)

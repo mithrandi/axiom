@@ -1,6 +1,6 @@
-
 from axiom.userbase import LoginSystem
 from axiom.test.test_userbase import GarbageProtocolHandler
+
 
 def createDatabase(s):
     ls = LoginSystem(store=s)
@@ -10,6 +10,7 @@ def createDatabase(s):
     gph = GarbageProtocolHandler(store=ss, garbage=7)
     gph.installOn(ss)
     # ls.addAccount(u'test2', u'example.com', 'ghjk')
+
 
 from axiom.test.historic.stubloader import saveStub
 

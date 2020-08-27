@@ -1,4 +1,3 @@
-
 """
 Test upgrading L{_SubSchedulerParentHook} from version 3 to 4.
 """

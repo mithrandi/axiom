@@ -1,9 +1,10 @@
-
 from twisted.trial import unittest
 from axiom.slotmachine import SetOnce, Attribute, SlotMachine, SchemaMachine
 
+
 class A(SlotMachine):
     slots = ['a', 'initialized']
+
 
 class B(SchemaMachine):
     test = Attribute()
@@ -12,12 +13,14 @@ class B(SchemaMachine):
     nondescriptor = 'readable'
     method = lambda self: self
 
+
 class Bsub(B):
     pass
 
+
 class C(object):
-    __slots__ = ['a', 'b',
-                 'c', 'initialized']
+    __slots__ = ['a', 'b', 'c', 'initialized']
+
 
 class D:
     def activate(self):
@@ -27,32 +30,40 @@ class D:
         self.b = 4
         self.c = 5
 
+
 class E(object):
     pass
+
 
 class X(B, A, C, D, E):
     pass
 
+
 class Y(Bsub):
     blah = SetOnce()
+
 
 class ClassWithDefault:
     x = 1
 
+
 class DefaultTest(SchemaMachine, ClassWithDefault):
     x = Attribute()
+
 
 class Decoy(ClassWithDefault):
     pass
 
+
 class DecoyDefault(Decoy, DefaultTest):
     pass
+
 
 class DefaultOverride(DefaultTest):
     x = 5
 
-class SlotMachineTest(unittest.TestCase):
 
+class SlotMachineTest(unittest.TestCase):
     def assertBSchema(self, b):
         """
         Test that the given instance conforms to L{B}'s schema.
@@ -69,19 +80,17 @@ class SlotMachineTest(unittest.TestCase):
         self.assertRaises(AttributeError, setattr, b, 'other', 'anything')
 
         self.assertEquals(b.nondescriptor, 'readable')
-        err = self.assertRaises(AttributeError,
-                                setattr, b, 'nondescriptor', 'writable')
-        self.assertEquals(str(err),
-                          "%r can't set attribute 'nondescriptor'"
-                          % (type(b).__name__,))
+        err = self.assertRaises(AttributeError, setattr, b, 'nondescriptor', 'writable')
+        self.assertEquals(
+            str(err), "%r can't set attribute 'nondescriptor'" % (type(b).__name__,)
+        )
         self.assertEquals(b.nondescriptor, 'readable')
 
         self.assertEquals(b.method(), b)
-        err = self.assertRaises(AttributeError,
-                                setattr, b, 'method', lambda: 5)
-        self.assertEquals(str(err),
-                          "%r can't set attribute 'method'"
-                          % (type(b).__name__,))
+        err = self.assertRaises(AttributeError, setattr, b, 'method', lambda: 5)
+        self.assertEquals(
+            str(err), "%r can't set attribute 'method'" % (type(b).__name__,)
+        )
         self.assertEquals(b.method(), b)
 
     def testAttributesNotAllowed(self):
@@ -98,7 +107,6 @@ class SlotMachineTest(unittest.TestCase):
         self.assertRaises(AttributeError, setattr, b, 'initialized', 2)
         self.assertEquals(b.initialized, 1)
 
-
     def testClassicMixin(self):
         x = X()
         x.activate()
@@ -107,11 +115,9 @@ class SlotMachineTest(unittest.TestCase):
         self.assertRaises(AttributeError, setattr, x, 'nottest', 'anything')
         self.assertRaises(AttributeError, getattr, x, 'nottest')
 
-
     def testAttributesTraverseDeepHierarchy(self):
         y = Y()
         self.assertBSchema(y)
-
 
     def test_baseDefault(self):
         """
@@ -121,14 +127,12 @@ class SlotMachineTest(unittest.TestCase):
         # self.failUnless('x' in dt.__slots__, 'x not in '+repr(dt.__slots__) )
         dt.x = 2
 
-
     def test_decoyDefault(self):
         """
         Same as L{test_baseDefault}, but with a decoy subclass.
         """
         d = DecoyDefault()
         d.x = 2
-
 
     def test_descriptorOverride(self):
         """

@@ -11,13 +11,12 @@ from twisted.python.versions import Version
 
 from axiom.store import Store
 from axiom import version as axiom_version
-from axiom.listversions import (getSystemVersions,
-                                SystemVersion,
-                                checkSystemVersion)
+from axiom.listversions import getSystemVersions, SystemVersion, checkSystemVersion
 
 from axiom.scripts.axiomatic import Options as AxiomaticOptions
 from axiom.test.util import CommandStubMixin
 from axiom.plugins.axiom_plugins import ListVersions
+
 
 class SystemVersionTests(unittest.TestCase, CommandStubMixin):
     """
@@ -32,7 +31,6 @@ class SystemVersionTests(unittest.TestCase, CommandStubMixin):
         self.dbdir = self.mktemp()
         self.store = Store(self.dbdir)
 
-
     def _reopenStore(self):
         """
         Close the store and reopen it.
@@ -40,27 +38,26 @@ class SystemVersionTests(unittest.TestCase, CommandStubMixin):
         self.store.close()
         self.store = Store(self.dbdir)
 
-
     def test_getSystemVersions(self):
         """
         L{getSystemVersions} returns all the version plugins it finds.
         """
-        someVersions = [Version("foo", 1, 2, 3),
-                        Version("baz", 0, 0, 1)]
+        someVersions = [Version("foo", 1, 2, 3), Version("baz", 0, 0, 1)]
+
         def getSomeVersions(iface, package):
             return someVersions
-        self.assertEqual(getSystemVersions(getSomeVersions),
-                         someVersions)
+
+        self.assertEqual(getSystemVersions(getSomeVersions), someVersions)
 
     def test_checkSystemVersion(self):
         """
-         Calling checkSystemVersion:
-            1. Doesn't duplicate the system version when called with the
-               same software package versions.
-            2. Creates a new system version when one of the software
-               package versions has changed.
-            3. Notices and creates a new system version when the system
-               config has reverted to a previous state.
+        Calling checkSystemVersion:
+           1. Doesn't duplicate the system version when called with the
+              same software package versions.
+           2. Creates a new system version when one of the software
+              package versions has changed.
+           3. Notices and creates a new system version when the system
+              config has reverted to a previous state.
         """
         versions = [Version("foo", 1, 2, 3)]
 
@@ -90,7 +87,6 @@ class SystemVersionTests(unittest.TestCase, CommandStubMixin):
         query_results = list(self.store.query(SystemVersion))
         self.assertEquals(len(query_results), 3)
 
-
     def test_commandLine(self):
         """
         L{ListVersions} will list versions of code used in this store when
@@ -105,7 +101,6 @@ class SystemVersionTests(unittest.TestCase, CommandStubMixin):
         lv.parseOptions([])
         result = out.getvalue()
         self.assertSubstring("axiom: " + axiom_version.short(), result)
-
 
     def test_axiomaticSubcommand(self):
         """

@@ -1,4 +1,3 @@
-
 """
 Tests for the upgrade of Scheduler from version 1 to version 2, in which it was
 largely supplanted by L{_SiteScheduler}.

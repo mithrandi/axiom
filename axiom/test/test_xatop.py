@@ -45,13 +45,11 @@ class TestItem(item.Item):
             self.checked = True
 
 
-
 class StoreTests(unittest.TestCase):
     def testCreation(self):
         dbdir = filepath.FilePath(self.mktemp())
         s = store.Store(dbdir)
         s.close()
-
 
     def testReCreation(self):
         dbdir = filepath.FilePath(self.mktemp())
@@ -60,14 +58,16 @@ class StoreTests(unittest.TestCase):
         s = store.Store(dbdir)
         s.close()
 
-
     def test_onlyOneDir(self):
         """
         A Store should raise an error if both dbdir and filesdir are specified.
         """
-        self.assertRaises(ValueError, store.Store,
-                          filepath.FilePath(self.mktemp()), filesdir=filepath.FilePath(self.mktemp()))
-
+        self.assertRaises(
+            ValueError,
+            store.Store,
+            filepath.FilePath(self.mktemp()),
+            filesdir=filepath.FilePath(self.mktemp()),
+        )
 
     def testTypeToDatabaseNames(self):
         # The real purpose of this test is to have the new get*Name
@@ -108,7 +108,6 @@ class StoreTests(unittest.TestCase):
         s = store.Store()
         self.assertRaises(errors.ItemClassesOnly, s.getTableName, TestItem(store=s))
 
-
     def testTableNameCacheDoesntGrow(self):
         """
         Make sure the table name cache doesn't grow out of control anymore.
@@ -120,7 +119,6 @@ class StoreTests(unittest.TestCase):
             s.getTableName(TestItem)
         self.assertEquals(x, len(s.typeToTableNameCache))
 
-
     def testStoreIDComparerIdentity(self):
         # We really want this to hold, because the storeID object is
         # used like a regular attribute as a key for various caching
@@ -128,7 +126,6 @@ class StoreTests(unittest.TestCase):
         a0 = TestItem.storeID
         a1 = TestItem.storeID
         self.assertIdentical(a0, a1)
-
 
     def test_loadTypeSchema(self):
         """
@@ -142,15 +139,16 @@ class StoreTests(unittest.TestCase):
         loadedSchema = s._loadTypeSchema()
         self.assertEqual(
             loadedSchema[(TestItem.typeName, TestItem.schemaVersion)],
-            [('bar', 'TEXT COLLATE NOCASE', False, attributes.text, ''),
-             ('baz', 'INTEGER', False, attributes.timestamp, ''),
-             ('booleanF', 'BOOLEAN', False, attributes.boolean, ''),
-             ('booleanT', 'BOOLEAN', False, attributes.boolean, ''),
-             ('foo', 'INTEGER', True, attributes.integer, ''),
-             ('myStore', 'INTEGER', True, attributes.reference, ''),
-             ('other', 'INTEGER', True, attributes.reference, ''),
-             ])
-
+            [
+                ('bar', 'TEXT COLLATE NOCASE', False, attributes.text, ''),
+                ('baz', 'INTEGER', False, attributes.timestamp, ''),
+                ('booleanF', 'BOOLEAN', False, attributes.boolean, ''),
+                ('booleanT', 'BOOLEAN', False, attributes.boolean, ''),
+                ('foo', 'INTEGER', True, attributes.integer, ''),
+                ('myStore', 'INTEGER', True, attributes.reference, ''),
+                ('other', 'INTEGER', True, attributes.reference, ''),
+            ],
+        )
 
     def test_checkInconsistentTypeSchema(self):
         """
@@ -162,46 +160,60 @@ class StoreTests(unittest.TestCase):
         s = store.Store()
 
         schema = sorted(
-            [(name, attr.sqltype, attr.indexed, attr, attr.doc)
-             for (name, attr) in TestItem.getSchema()],
-            key=lambda a: a[0])
+            [
+                (name, attr.sqltype, attr.indexed, attr, attr.doc)
+                for (name, attr) in TestItem.getSchema()
+            ],
+            key=lambda a: a[0],
+        )
 
         # Test a missing attribute
         e1 = self.assertRaises(
             RuntimeError,
             s._checkTypeSchemaConsistency,
             TestItem,
-            {(TestItem.typeName, TestItem.schemaVersion): schema[:-1]})
+            {(TestItem.typeName, TestItem.schemaVersion): schema[:-1]},
+        )
         self.assertEqual(
             e1[0],
             "Schema mismatch on already-loaded "
             "<class 'axiom.test.test_xatop.TestItem'> <'TestItem'> object "
             "version 1:\n"
             "Only in memory:\n"
-            "('other', 'INTEGER')")
+            "('other', 'INTEGER')",
+        )
 
         # And an extra attribute
         e2 = self.assertRaises(
             RuntimeError,
             s._checkTypeSchemaConsistency,
             TestItem,
-            {(TestItem.typeName, TestItem.schemaVersion):
-             schema + [('extra', 'INTEGER')]})
+            {
+                (TestItem.typeName, TestItem.schemaVersion): schema
+                + [('extra', 'INTEGER')]
+            },
+        )
         self.assertEqual(
             e2[0],
             "Schema mismatch on already-loaded "
             "<class 'axiom.test.test_xatop.TestItem'> <'TestItem'> object "
             "version 1:\n"
             "Only on disk:\n"
-            "('extra', 'INTEGER')")
+            "('extra', 'INTEGER')",
+        )
 
         # And the wrong type for one of the attributes
         e3 = self.assertRaises(
             RuntimeError,
             s._checkTypeSchemaConsistency,
             TestItem,
-            {(TestItem.typeName, TestItem.schemaVersion):
-             [(schema[0][0], 'VARCHAR(64) (this is made up)')] + schema[1:]})
+            {
+                (TestItem.typeName, TestItem.schemaVersion): [
+                    (schema[0][0], 'VARCHAR(64) (this is made up)')
+                ]
+                + schema[1:]
+            },
+        )
         self.assertEqual(
             e3[0],
             "Schema mismatch on already-loaded "
@@ -210,8 +222,8 @@ class StoreTests(unittest.TestCase):
             "Only on disk:\n"
             "('bar', 'VARCHAR(64) (this is made up)')\n"
             "Only in memory:\n"
-            "('bar', 'TEXT COLLATE NOCASE')")
-
+            "('bar', 'TEXT COLLATE NOCASE')",
+        )
 
     def test_checkOutdatedTypeSchema(self):
         """
@@ -223,21 +235,25 @@ class StoreTests(unittest.TestCase):
 
         schema = [
             (name, attr.sqltype, attr.indexed, attr, attr.doc)
-            for (name, attr) in TestItem.getSchema()]
+            for (name, attr) in TestItem.getSchema()
+        ]
 
         self.assertRaises(
             RuntimeError,
             s._checkTypeSchemaConsistency,
             TestItem,
-            {(TestItem.typeName, TestItem.schemaVersion): schema,
-             (TestItem.typeName, TestItem.schemaVersion + 1): schema})
-
+            {
+                (TestItem.typeName, TestItem.schemaVersion): schema,
+                (TestItem.typeName, TestItem.schemaVersion + 1): schema,
+            },
+        )
 
     def test_checkConsistencyWhenOpened(self):
         """
         L{Store.__init__} checks the consistency of the schema and raises
         L{RuntimeError} for any inconsistency.
         """
+
         class SoonToChange(item.Item):
             attribute = attributes.integer()
 
@@ -248,6 +264,7 @@ class StoreTests(unittest.TestCase):
 
         # Get rid of the cached information about this type
         from axiom.item import _typeNameToMostRecentClass
+
         del _typeNameToMostRecentClass[SoonToChange.typeName]
         del SoonToChange
 
@@ -255,7 +272,6 @@ class StoreTests(unittest.TestCase):
             attribute = attributes.boolean()
 
         self.assertRaises(RuntimeError, store.Store, dbpath)
-
 
     def test_createAndLoadExistingIndexes(self):
         """
@@ -270,11 +286,15 @@ class StoreTests(unittest.TestCase):
 
         self.assertEqual(
             created,
-            set([s._indexNameOf(TestItem, ['foo']),
-                 s._indexNameOf(TestItem, ['other']),
-                 s._indexNameOf(TestItem, ['myStore']),
-                 s._indexNameOf(TestItem, ['bar', 'baz'])]))
-
+            set(
+                [
+                    s._indexNameOf(TestItem, ['foo']),
+                    s._indexNameOf(TestItem, ['other']),
+                    s._indexNameOf(TestItem, ['myStore']),
+                    s._indexNameOf(TestItem, ['bar', 'baz']),
+                ]
+            ),
+        )
 
     def test_loadExistingAttachedStoreIndexes(self):
         """
@@ -291,7 +311,6 @@ class StoreTests(unittest.TestCase):
         after = secondary._loadExistingIndexes()
 
         self.assertEqual(before, after)
-
 
     def test_createAttachedStoreIndexes(self):
         """
@@ -322,11 +341,15 @@ class StoreTests(unittest.TestCase):
 
         self.assertEqual(
             after - before,
-            set([secondary._indexNameOf(TestItem, ['foo']),
-                 secondary._indexNameOf(TestItem, ['other']),
-                 secondary._indexNameOf(TestItem, ['myStore']),
-                 secondary._indexNameOf(TestItem, ['bar', 'baz'])]))
-
+            set(
+                [
+                    secondary._indexNameOf(TestItem, ['foo']),
+                    secondary._indexNameOf(TestItem, ['other']),
+                    secondary._indexNameOf(TestItem, ['myStore']),
+                    secondary._indexNameOf(TestItem, ['bar', 'baz']),
+                ]
+            ),
+        )
 
     def test_loadPythonModuleHint(self):
         """
@@ -357,19 +380,22 @@ class StoreTests(unittest.TestCase):
 
             # Write out the source.
             modulePath = importPath.child(moduleName + ".py")
-            modulePath.setContent("""\
+            modulePath.setContent(
+                """\
 from axiom.item import Item
 from axiom.attributes import integer
 
 class Unloaded(Item):
     value = integer()
-""")
+"""
+            )
 
         # In another process, so as not to cause the unloaded modules to be
         # loaded in this process, create a store containing instances of the
         # Unloaded types.
         script = filepath.FilePath(self.mktemp())
-        script.setContent("""\
+        script.setContent(
+            """\
 from sys import argv
 from twisted.python.reflect import namedAny
 from axiom.store import Store
@@ -381,13 +407,22 @@ for i in range(int(typeCount)):
     moduleName = moduleBase + str(i)
     namedAny(moduleName).Unloaded(store=s, value=int(magicOffset) + i)
 s.close()
-""")
+"""
+        )
 
-        os.system(" ".join([
+        os.system(
+            " ".join(
+                [
                     "PYTHONPATH=%s:$PYTHONPATH" % (importPath.path,),
-                    sys.executable, script.path,
-                    dbdir.path, str(typeCount), baseModuleName,
-                    str(magicOffset)]))
+                    sys.executable,
+                    script.path,
+                    dbdir.path,
+                    str(typeCount),
+                    baseModuleName,
+                    str(magicOffset),
+                ]
+            )
+        )
 
         # Another sanity check.  The modules still better not have been
         # imported in this process.
@@ -403,8 +438,8 @@ s.close()
         for counter in range(typeCount):
             Unloaded = sys.modules[baseModuleName + str(counter)].Unloaded
             self.assertEqual(
-                s.query(Unloaded,
-                        Unloaded.value == magicOffset + counter).count(), 1)
+                s.query(Unloaded, Unloaded.value == magicOffset + counter).count(), 1
+            )
 
     def test_closing(self):
         """
@@ -420,7 +455,6 @@ s.close()
         self.assertTrue(connection.closed, 'Connection should be closed')
         self.assertTrue(cursor.closed, 'Cursor should be closed')
 
-
     def test_journalMode(self):
         """
         Passing a journalling mode sets that mode on open.
@@ -428,9 +462,8 @@ s.close()
         dbdir = filepath.FilePath(self.mktemp())
         s = store.Store(dbdir, journalMode=u'MEMORY')
         self.assertEquals(
-            s.querySchemaSQL('PRAGMA *DATABASE*.journal_mode'),
-            [(u'memory',)])
-
+            s.querySchemaSQL('PRAGMA *DATABASE*.journal_mode'), [(u'memory',)]
+        )
 
     def test_journalModeNone(self):
         """
@@ -441,38 +474,31 @@ s.close()
         s.close()
         s = store.Store(dbdir, journalMode=None)
         self.assertEquals(
-            s.querySchemaSQL('PRAGMA *DATABASE*.journal_mode'),
-            [(u'wal',)])
-
+            s.querySchemaSQL('PRAGMA *DATABASE*.journal_mode'), [(u'wal',)]
+        )
 
 
 class FailurePathTests(unittest.TestCase):
-
     def testNoCrossStoreRefs(self):
         s1 = store.Store()
         s2 = store.Store()
 
         t1 = TestItem(store=s1)
-        self.assertRaises(errors.NoCrossStoreReferences,
-                          TestItem, store=s2, other=t1)
+        self.assertRaises(errors.NoCrossStoreReferences, TestItem, store=s2, other=t1)
 
         t2 = TestItem(store=s2)
 
-        self.assertRaises(errors.NoCrossStoreReferences,
-                          setattr, t2, 'other', t1)
+        self.assertRaises(errors.NoCrossStoreReferences, setattr, t2, 'other', t1)
 
-        self.assertRaises(errors.NoCrossStoreReferences,
-                          setattr, t2, 'other', s1)
+        self.assertRaises(errors.NoCrossStoreReferences, setattr, t2, 'other', s1)
 
         t3 = TestItem(other=t1)
 
-        self.assertRaises(errors.NoCrossStoreReferences,
-                          setattr, t3, 'store', s2)
+        self.assertRaises(errors.NoCrossStoreReferences, setattr, t3, 'store', s2)
 
         t3.store = s1
 
-        self.assertEquals(list(s1.query(TestItem)),
-                          [t1, t3])
+        self.assertEquals(list(s1.query(TestItem)), [t1, t3])
 
 
 class ItemTests(unittest.TestCase):
@@ -485,9 +511,7 @@ class ItemTests(unittest.TestCase):
 
     def testFirstActivationHappensWhenAttributesAreSet(self):
         tio = TestItem(store=self.store)
-        ti = TestItem(store=self.store,
-                      checkactive=True,
-                      other=tio)
+        ti = TestItem(store=self.store, checkactive=True, other=tio)
 
         self.assertEquals(ti.checked, True)
 
@@ -495,12 +519,8 @@ class ItemTests(unittest.TestCase):
         timeval = extime.Time.fromISO8601TimeAndDate('2004-10-05T10:12:14.1234')
 
         s = TestItem(
-            foo = 42,
-            bar = u'hello world',
-            baz = timeval,
-            booleanT = True,
-            booleanF = False
-            )
+            foo=42, bar=u'hello world', baz=timeval, booleanT=True, booleanF=False
+        )
         s.myStore = self.store
 
         s.store = self.store
@@ -513,33 +533,33 @@ class ItemTests(unittest.TestCase):
         self.assertEquals(s2.booleanF, s.booleanF)
         self.assertIdentical(s2.myStore, self.store)
 
-
     def testBasicQuery(self):
         def tt():
             # !@#$ 3x+ speedup over not doing this in a transact()
-            created = [TestItem(foo=x, bar=u"string-value-of-"+str(x))
-                       for x in range(20)]
+            created = [
+                TestItem(foo=x, bar=u"string-value-of-" + str(x)) for x in range(20)
+            ]
             for c in created:
                 c.store = self.store
 
         self.store.transact(tt)
 
-        loaded = self.store.query(TestItem,
-                                  TestItem.foo >= 10)
+        loaded = self.store.query(TestItem, TestItem.foo >= 10)
 
         self.assertEquals(len(list(loaded)), 10)
 
     def testCreateThenDelete(self):
         timeval = extime.Time.fromISO8601TimeAndDate('2004-10-05T10:12:14.1234')
         sid = []
+
         def txn():
             s = TestItem(
-                store = self.store,
-                foo = 42,
-                bar = u'hello world',
-                baz = timeval,
-                booleanT = True,
-                booleanF = False
+                store=self.store,
+                foo=42,
+                bar=u'hello world',
+                baz=timeval,
+                booleanT=True,
+                booleanF=False,
             )
             sid.append(s.storeID)
             self.assertEquals(list(self.store.query(TestItem)), [s])
@@ -552,40 +572,40 @@ class ItemTests(unittest.TestCase):
         self.assertRaises(KeyError, self.store.getItemByID, sid[0])
         self.assertEquals(list(self.store.query(TestItem)), [])
 
-
     def test_getNeverInsertedItem(self):
         """
         Verify that using getItemByID with a default object to attempt to
         load by storeID an Item which was created and deleted within a
         single transaction results in the default object.
         """
+
         def txn():
             a = TestItem(store=self.store)
             storeID = a.storeID
             a.deleteFromStore()
             del a
             return storeID
+
         storeID = self.store.transact(txn)
         default = object()
         result = self.store.getItemByID(storeID, default=default)
         self.assertIdentical(result, default)
-
 
     def testInMemoryRevert(self):
         item1 = TestItem(
             store=self.store,
             foo=24,
             bar=u'Zoom',
-            baz=extime.Time.fromISO8601TimeAndDate('2004-10-05T10:12:14.1234')
-            )
+            baz=extime.Time.fromISO8601TimeAndDate('2004-10-05T10:12:14.1234'),
+        )
 
         def brokenFunction():
             item2 = TestItem(
                 store=self.store,
                 foo=42,
                 bar=u'mooZ',
-                baz=extime.Time.fromISO8601TimeAndDate('1970-03-12T05:05:11.5921')
-                )
+                baz=extime.Time.fromISO8601TimeAndDate('1970-03-12T05:05:11.5921'),
+            )
 
             item1.foo = 823
             item1.bar = u'this is the wrong answer'
@@ -601,10 +621,11 @@ class ItemTests(unittest.TestCase):
             self.assertRaises(KeyError, self.store.getItemByID, storeID)
             self.assertEquals(item1.foo, 24)
             self.assertEquals(item1.bar, u'Zoom')
-            self.assertEquals(item1.baz.asISO8601TimeAndDate(), '2004-10-05T10:12:14.1234+00:00')
+            self.assertEquals(
+                item1.baz.asISO8601TimeAndDate(), '2004-10-05T10:12:14.1234+00:00'
+            )
         else:
             self.fail("Transaction should have raised an exception")
-
 
     def test_deleteAndVacuum(self):
         """
@@ -614,12 +635,10 @@ class ItemTests(unittest.TestCase):
 
         @self.store.transact
         def txn1():
-            sid.append(
-                AttributefulItem(store=self.store, withDefault=0).storeID)
+            sid.append(AttributefulItem(store=self.store, withDefault=0).storeID)
             i = AttributefulItem(store=self.store, withDefault=1)
             sid.append(i.storeID)
-            sid.append(
-                AttributefulItem(store=self.store, withDefault=2).storeID)
+            sid.append(AttributefulItem(store=self.store, withDefault=2).storeID)
             i.deleteFromStore()
 
         self.store.executeSQL('VACUUM')
@@ -627,10 +646,8 @@ class ItemTests(unittest.TestCase):
         @self.store.transact
         def txn2():
             self.assertEqual(self.store.getItemByID(sid[0]).withDefault, 0)
-            self.assertRaises(
-                errors.ItemNotFound, self.store.getItemByID, sid[1])
+            self.assertRaises(errors.ItemNotFound, self.store.getItemByID, sid[1])
             self.assertEqual(self.store.getItemByID(sid[2]).withDefault, 2)
-
 
 
 class AttributefulItem(item.Item):
@@ -639,7 +656,6 @@ class AttributefulItem(item.Item):
 
     withDefault = attributes.integer(default=42)
     withoutDefault = attributes.integer()
-
 
 
 class StricterItem(item.Item):
@@ -652,6 +668,7 @@ class StricterItem(item.Item):
 class AttributeTests(unittest.TestCase):
     def testGetAttribute(self):
         s = store.Store()
+
         def testGetAttribute():
             x = AttributefulItem(store=s)
             y = AttributefulItem(store=s, withDefault=20)
@@ -665,6 +682,7 @@ class AttributeTests(unittest.TestCase):
             self.assertEquals(y.withoutDefault, None)
             self.assertEquals(z.withDefault, 42)
             self.assertEquals(z.withoutDefault, 30)
+
         s.transact(testGetAttribute)
 
     def testIntegerAttribute_SQLiteBug(self):
@@ -675,10 +693,7 @@ class AttributeTests(unittest.TestCase):
         for power in 8, 16, 24, 32, 48, 63:
             s = store.Store()
             input = 2 ** power - 1
-            s.transact(
-                AttributefulItem,
-                store=s,
-                withoutDefault=input)
+            s.transact(AttributefulItem, store=s, withoutDefault=input)
             output = s.findFirst(AttributefulItem).withoutDefault
             self.assertEquals(input, output)
             s.close()
@@ -687,10 +702,12 @@ class AttributeTests(unittest.TestCase):
         testIntegerAttribute_SQLiteBug.todo = (
             "If this test fails on your system, you should really upgrade SQLite "
             "to at least 3.2.7.  Not doing so will lead to corruption of your "
-            "data.")
+            "data."
+        )
 
     def testQueries(self):
         s = store.Store()
+
         def testQueries():
             x = AttributefulItem(store=s, withDefault=50)
             y = AttributefulItem(store=s, withDefault=30)
@@ -700,25 +717,35 @@ class AttributeTests(unittest.TestCase):
                 o.checkpoint()
 
             self.assertEquals(
-                list(s.query(AttributefulItem, AttributefulItem.withoutDefault != None,
-                             sort=AttributefulItem.withoutDefault.desc)),
-                [z])
+                list(
+                    s.query(
+                        AttributefulItem,
+                        AttributefulItem.withoutDefault != None,
+                        sort=AttributefulItem.withoutDefault.desc,
+                    )
+                ),
+                [z],
+            )
 
             self.assertEquals(
                 list(s.query(AttributefulItem, sort=AttributefulItem.withDefault.desc)),
-                [x, z, y])
+                [x, z, y],
+            )
 
         s.transact(testQueries)
 
     def testDontAllowNone(self):
         s = store.Store()
+
         def testDontAllowNone():
             try:
                 x = StricterItem(store=s)
             except TypeError:
                 pass
             else:
-                self.fail("Creating a StricterItem without an aRef value should have failed")
+                self.fail(
+                    "Creating a StricterItem without an aRef value should have failed"
+                )
 
             a = AttributefulItem(store=s)
             x = StricterItem(store=s, aRef=a)
@@ -730,11 +757,11 @@ class AttributeTests(unittest.TestCase):
                 pass
             else:
                 self.fail("Setting aRef to None on a StricterItem should have failed")
+
         s.transact(testDontAllowNone)
 
 
 class TestFindOrCreate(unittest.TestCase):
-
     def testCreate(self):
         s = store.Store()
         ai = s.findOrCreate(AttributefulItem)
@@ -784,12 +811,12 @@ class TestFindOrCreate(unittest.TestCase):
         self.assertEquals(a0, ai2)
 
 
-
 class DeletedTrackingItem(item.Item):
     """
     Helper class for testing that C{deleted} is called by
     ItemQuery.deleteFromStore.
     """
+
     deletedTimes = 0
     value = attributes.integer()
 
@@ -797,12 +824,12 @@ class DeletedTrackingItem(item.Item):
         DeletedTrackingItem.deletedTimes += 1
 
 
-
 class DeleteFromStoreTrackingItem(item.Item):
     """
     Helper class for testing that C{deleteFromStore} is called by
     ItemQuery.deleteFromStore.
     """
+
     deletedTimes = 0
     value = attributes.integer()
 
@@ -811,9 +838,7 @@ class DeleteFromStoreTrackingItem(item.Item):
         item.Item.deleteFromStore(self)
 
 
-
 class MassInsertDeleteTests(unittest.TestCase):
-
     def setUp(self):
         self.storepath = filepath.FilePath(self.mktemp())
         self.store = store.Store(self.storepath)
@@ -824,13 +849,13 @@ class MassInsertDeleteTests(unittest.TestCase):
         to with appropriate attributes.
         """
 
-        dataRows = [(37, 93),
-                    (1,   2)]
+        dataRows = [(37, 93), (1, 2)]
 
-        self.store.batchInsert(AttributefulItem,
-                              [AttributefulItem.withDefault,
-                               AttributefulItem.withoutDefault],
-                              dataRows)
+        self.store.batchInsert(
+            AttributefulItem,
+            [AttributefulItem.withDefault, AttributefulItem.withoutDefault],
+            dataRows,
+        )
         items = list(self.store.query(AttributefulItem))
         self.assertEquals(items[0].withDefault, 37)
         self.assertEquals(items[0].withoutDefault, 93)
@@ -841,14 +866,14 @@ class MassInsertDeleteTests(unittest.TestCase):
         """
         Test that batchInsert works in a transaction.
         """
-        dataRows = [(37, 93),
-                    (1,   2)]
+        dataRows = [(37, 93), (1, 2)]
 
-        self.store.transact(self.store.batchInsert,
-                            AttributefulItem,
-                            [AttributefulItem.withDefault,
-                             AttributefulItem.withoutDefault],
-                            dataRows)
+        self.store.transact(
+            self.store.batchInsert,
+            AttributefulItem,
+            [AttributefulItem.withDefault, AttributefulItem.withoutDefault],
+            dataRows,
+        )
 
         items = list(self.store.query(AttributefulItem))
         self.assertEquals(items[0].withDefault, 37)
@@ -862,17 +887,24 @@ class MassInsertDeleteTests(unittest.TestCase):
         """
         itemA = AttributefulItem(store=self.store)
         itemB = AttributefulItem(store=self.store)
-        dataRows = [(1, u"hello", extime.Time(),
-                     itemA, True, False, self.store),
-                    (2, u"hoorj", extime.Time(),
-                     itemB, False, True, self.store)]
+        dataRows = [
+            (1, u"hello", extime.Time(), itemA, True, False, self.store),
+            (2, u"hoorj", extime.Time(), itemB, False, True, self.store),
+        ]
 
-        self.store.batchInsert(TestItem,
-                               [TestItem.foo, TestItem.bar,
-                                TestItem.baz, TestItem.other,
-                                TestItem.booleanT, TestItem.booleanF,
-                                TestItem.myStore],
-                               dataRows)
+        self.store.batchInsert(
+            TestItem,
+            [
+                TestItem.foo,
+                TestItem.bar,
+                TestItem.baz,
+                TestItem.other,
+                TestItem.booleanT,
+                TestItem.booleanF,
+                TestItem.myStore,
+            ],
+            dataRows,
+        )
         items = list(self.store.query(TestItem))
 
         self.assertEquals(items[0].other, itemA)
@@ -892,15 +924,16 @@ class MassInsertDeleteTests(unittest.TestCase):
         Test that batchInsert does the right thing when only a few
         attributes are being set.
         """
-        dataRows = [(u"hello", 50, False, self.store),
-                    (u"hoorj", None, True, self.store)]
+        dataRows = [
+            (u"hello", 50, False, self.store),
+            (u"hoorj", None, True, self.store),
+        ]
 
-        self.store.batchInsert(TestItem,
-                               [TestItem.bar,
-                                TestItem.foo,
-                                TestItem.booleanF,
-                                TestItem.myStore],
-                               dataRows)
+        self.store.batchInsert(
+            TestItem,
+            [TestItem.bar, TestItem.foo, TestItem.booleanF, TestItem.myStore],
+            dataRows,
+        )
         items = list(self.store.query(TestItem))
 
         self.assertEquals(items[0].other, None)
@@ -930,9 +963,9 @@ class MassInsertDeleteTests(unittest.TestCase):
         for i in xrange(10):
             AttributefulItem(store=self.store, withoutDefault=i)
 
-        self.store.query(AttributefulItem,
-                              AttributefulItem.withoutDefault > 4
-                         ).deleteFromStore()
+        self.store.query(
+            AttributefulItem, AttributefulItem.withoutDefault > 4
+        ).deleteFromStore()
         self.assertEquals(self.store.query(AttributefulItem).count(), 5)
 
     def testSlowBatchDelete(self):
@@ -943,7 +976,6 @@ class MassInsertDeleteTests(unittest.TestCase):
         self.store.query(DeletedTrackingItem).deleteFromStore()
         self.assertEqual(DeletedTrackingItem.deletedTimes, 1)
 
-
     def test_slowBatchDeleteBecauseDeletedFromStore(self):
         """
         Ensure that a 'deleteFromStore' method on an Item will be called if it
@@ -953,7 +985,6 @@ class MassInsertDeleteTests(unittest.TestCase):
         self.store.query(DeleteFromStoreTrackingItem).deleteFromStore()
         self.assertEqual(DeleteFromStoreTrackingItem.deletedTimes, 1)
 
-
     def test_batchDeleteOrder(self):
         """
         C{deleteFromStore} on a query with an order specified disregards the
@@ -962,10 +993,9 @@ class MassInsertDeleteTests(unittest.TestCase):
         for i in xrange(10):
             AttributefulItem(store=self.store, withoutDefault=i)
         self.store.query(
-            AttributefulItem,
-            sort=AttributefulItem.withoutDefault.asc).deleteFromStore()
+            AttributefulItem, sort=AttributefulItem.withoutDefault.asc
+        ).deleteFromStore()
         self.assertEqual(list(self.store.query(AttributefulItem)), [])
-
 
     def test_batchDeleteOrderLimit(self):
         """
@@ -975,19 +1005,19 @@ class MassInsertDeleteTests(unittest.TestCase):
         options = self.store.querySQL('PRAGMA compile_options;')
         if (u'ENABLE_UPDATE_DELETE_LIMIT',) not in options:
             raise unittest.SkipTest(
-                'SQLite compiled without SQLITE_ENABLE_UPDATE_DELETE_LIMIT')
+                'SQLite compiled without SQLITE_ENABLE_UPDATE_DELETE_LIMIT'
+            )
 
         for i in xrange(10):
             AttributefulItem(store=self.store, withoutDefault=i)
         self.store.query(
-            AttributefulItem,
-            sort=AttributefulItem.withoutDefault.desc,
-            limit=5).deleteFromStore()
-        items = list(self.store.query(
-            AttributefulItem, sort=AttributefulItem.withoutDefault.asc))
+            AttributefulItem, sort=AttributefulItem.withoutDefault.desc, limit=5
+        ).deleteFromStore()
+        items = list(
+            self.store.query(AttributefulItem, sort=AttributefulItem.withoutDefault.asc)
+        )
         self.assertEqual(len(items), 5)
         self.assertEqual(items[-1].withoutDefault, 4)
-
 
 
 # Item types we will use to change the underlying database schema (by creating
@@ -995,20 +1025,19 @@ class MassInsertDeleteTests(unittest.TestCase):
 class ConcurrentItemA(item.Item):
     anAttribute = attributes.text()
 
+
 class ConcurrentItemB(item.Item):
     anotherAttribute = attributes.integer()
 
-class ProcessConcurrencyTestCase(unittest.TestCase,
-                                 protocol.ProcessProtocol):
 
+class ProcessConcurrencyTestCase(unittest.TestCase, protocol.ProcessProtocol):
     def spawn(self, *args):
         self.d = defer.Deferred()
         from twisted.internet import reactor
+
         reactor.spawnProcess(
-            self,
-            sys.executable,
-            [sys.executable] + list(args),
-            os.environ)
+            self, sys.executable, [sys.executable] + list(args), os.environ
+        )
         return self.d
 
     ok = 0
@@ -1016,10 +1045,9 @@ class ProcessConcurrencyTestCase(unittest.TestCase,
     def outReceived(self, data):
         if data == '1':
             # step 1: create an item
-            cia = ConcurrentItemA(store=self.store,
-                                  anAttribute=u'aaa')
+            cia = ConcurrentItemA(store=self.store, anAttribute=u'aaa')
             # then tell the subprocess to load it
-            self.transport.write(str(cia.storeID)+'\n')
+            self.transport.write(str(cia.storeID) + '\n')
         elif data == '2':
             # step 2: the subprocess has notified us that it has successfully
             # completed
@@ -1061,14 +1089,13 @@ class ConcurrencyTestCase(unittest.TestCase):
 
         secondStore = store.Store(dbdir)
 
-        self.assertNotIdentical(firstStore, secondStore) # if this line starts
-                                                         # breaking, rewrite
-                                                         # this test.
+        self.assertNotIdentical(firstStore, secondStore)  # if this line starts
+        # breaking, rewrite
+        # this test.
 
         ConcurrentItemB(store=firstStore)
 
         self.assertEquals(secondStore.query(ConcurrentItemA).count(), 1)
-
 
     def testNewItemType(self):
         """
@@ -1086,11 +1113,11 @@ class ConcurrencyTestCase(unittest.TestCase):
         self.assertEquals(secondStore.query(ConcurrentItemA).count(), 1)
 
 
-
 class LoggingTests(unittest.TestCase):
     """
     Tests for log events emitted by L{axiom.store}.
     """
+
     def _openTest(self, dbdir, expectedValue):
         events = []
         log.addObserver(events.append)
@@ -1105,7 +1132,6 @@ class LoggingTests(unittest.TestCase):
         else:
             self.fail("store_opened IStatEvent not emitted")
 
-
     def test_openOnDisk(self):
         """
         Opening a file-backed store logs an event including the path to the
@@ -1113,7 +1139,6 @@ class LoggingTests(unittest.TestCase):
         """
         dbdir = self.mktemp()
         self._openTest(dbdir, os.path.abspath(dbdir))
-
 
     def test_openInMemory(self):
         """

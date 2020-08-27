@@ -6,6 +6,7 @@ Plugins provided by Axiom for Axiom.
 
 import getpass
 import code, os, traceback, sys
+
 try:
     import readline
 except ImportError:
@@ -18,6 +19,7 @@ from twisted.python.reflect import qual
 from twisted.plugin import IPlugin
 
 from epsilon.hotfix import require
+
 require('twisted', 'filepath_copyTo')
 
 import axiom
@@ -31,9 +33,8 @@ from axiom.upgrade import upgradeExplicitOid
 
 directlyProvides(version, IPlugin, IVersion)
 
-#placate pyflakes
+# placate pyflakes
 ListVersions
-
 
 
 class Upgrade(axiomatic.AxiomaticCommand):
@@ -41,9 +42,12 @@ class Upgrade(axiomatic.AxiomaticCommand):
     description = 'Synchronously upgrade an Axiom store and substores'
 
     optParameters = [
-        ('count', 'n', '100', 'Number of upgrades to perform per transaction')]
+        ('count', 'n', '100', 'Number of upgrades to perform per transaction')
+    ]
 
-    errorMessageFormat = 'Error upgrading item (with typeName=%s and storeID=%d) from version %d to %d.'
+    errorMessageFormat = (
+        'Error upgrading item (with typeName=%s and storeID=%d) from version %d to %d.'
+    )
 
     def upgradeEverything(self, store):
         """
@@ -51,7 +55,6 @@ class Upgrade(axiomatic.AxiomaticCommand):
         """
         for dummy in store._upgradeManager.upgradeBatch(self.count):
             pass
-
 
     def upgradeStore(self, store):
         """
@@ -79,9 +82,11 @@ class Upgrade(axiomatic.AxiomaticCommand):
             print 'Upgrader error:'
             e.originalFailure.printTraceback(file=sys.stdout)
             print self.errorMessageFormat % (
-                e.oldType.typeName, e.storeID, e.oldType.schemaVersion,
-                e.newType.schemaVersion)
-
+                e.oldType.typeName,
+                e.storeID,
+                e.oldType.schemaVersion,
+                e.newType.schemaVersion,
+            )
 
     def postOptions(self):
         try:
@@ -93,7 +98,6 @@ class Upgrade(axiomatic.AxiomaticCommand):
         self.perform(siteStore, count)
 
 
-
 class AxiomConsole(code.InteractiveConsole):
     def runcode(self, code):
         """
@@ -102,9 +106,10 @@ class AxiomConsole(code.InteractiveConsole):
         value.
         """
         if not self.locals.get('autocommit', None):
-            return self.locals['db'].transact(code.InteractiveConsole.runcode, self, code)
+            return self.locals['db'].transact(
+                code.InteractiveConsole.runcode, self, code
+            )
         return code.InteractiveConsole.runcode(self, code)
-
 
 
 class Browse(axiomatic.AxiomaticCommand):
@@ -114,13 +119,17 @@ class Browse(axiomatic.AxiomaticCommand):
     description = 'Interact with an Axiom store.'
 
     optParameters = [
-        ('history-file', 'h', '~/.axiomatic-browser-history',
-         'Name of the file to which to save input history.'),
-        ]
+        (
+            'history-file',
+            'h',
+            '~/.axiomatic-browser-history',
+            'Name of the file to which to save input history.',
+        ),
+    ]
 
     optFlags = [
         ('debug', 'b', 'Open Store in debug mode.'),
-        ]
+    ]
 
     def postOptions(self):
         interp = code.InteractiveConsole(self.namespace(), '<axiom browser>')
@@ -133,7 +142,6 @@ class Browse(axiomatic.AxiomaticCommand):
             if readline is not None:
                 readline.write_history_file(historyFile)
 
-
     def namespace(self):
         """
         Return a dictionary representing the namespace which should be
@@ -143,9 +151,8 @@ class Browse(axiomatic.AxiomaticCommand):
             'db': self.store,
             'store': store,
             'autocommit': False,
-            }
+        }
         return self._ns
-
 
 
 class UserbaseMixin:
@@ -159,11 +166,9 @@ class UserbaseMixin:
             return ls
 
 
-
 class Install(axiomatic.AxiomaticSubCommand, UserbaseMixin):
     def postOptions(self):
         self.installOn(self.store)
-
 
 
 class Create(axiomatic.AxiomaticSubCommand, UserbaseMixin):
@@ -174,7 +179,6 @@ class Create(axiomatic.AxiomaticSubCommand, UserbaseMixin):
         self['domain'] = self.decodeCommandLine(domain)
         self['password'] = password
 
-
     def postOptions(self):
         msg = 'Enter new AXIOM password: '
         while not self['password']:
@@ -184,9 +188,7 @@ class Create(axiomatic.AxiomaticSubCommand, UserbaseMixin):
                 self['password'] = password
             else:
                 msg = 'Passwords do not match.  Enter new AXIOM password: '
-        self.addAccount(
-            self.store, self['username'], self['domain'], self['password'])
-
+        self.addAccount(self.store, self['username'], self['domain'], self['password'])
 
     def addAccount(self, siteStore, username, domain, password):
         """
@@ -211,7 +213,6 @@ class Create(axiomatic.AxiomaticSubCommand, UserbaseMixin):
         return acc
 
 
-
 class Disable(axiomatic.AxiomaticSubCommand):
     synopsis = "<username> <domain>"
 
@@ -220,9 +221,13 @@ class Disable(axiomatic.AxiomaticSubCommand):
         self['domain'] = self.decodeCommandLine(domain)
 
     def postOptions(self):
-        for acc in self.store.query(userbase.LoginAccount,
-                                    attributes.AND(userbase.LoginAccount.username == self['username'],
-                                                   userbase.LoginAccount.domain == self['domain'])):
+        for acc in self.store.query(
+            userbase.LoginAccount,
+            attributes.AND(
+                userbase.LoginAccount.username == self['username'],
+                userbase.LoginAccount.domain == self['domain'],
+            ),
+        ):
             if acc.disabled:
                 raise usage.UsageError("That account is already disabled.")
             else:
@@ -230,7 +235,6 @@ class Disable(axiomatic.AxiomaticSubCommand):
                 break
         else:
             raise usage.UsageError("No account by that name exists.")
-
 
 
 class List(axiomatic.AxiomaticSubCommand):
@@ -249,7 +253,6 @@ class List(axiomatic.AxiomaticSubCommand):
             print 'No accounts'
 
 
-
 class UserBaseCommand(axiomatic.AxiomaticCommand):
     name = 'userbase'
     description = 'LoginSystem introspection and manipulation.'
@@ -259,44 +262,51 @@ class UserBaseCommand(axiomatic.AxiomaticCommand):
         ('create', None, Create, "Create a new user"),
         ('disable', None, Disable, "Disable an existing user"),
         ('list', None, List, "List users in an Axiom database"),
-        ]
+    ]
 
     def getStore(self):
         return self.parent.getStore()
-
 
 
 class Extract(axiomatic.AxiomaticCommand):
     name = 'extract-user'
     description = 'Remove an account from the login system, moving its associated database to the filesystem.'
     optParameters = [
-        ('address', 'a', None, 'localpart@domain-format identifier of the user store to extract.'),
-        ('destination', 'd', None, 'Directory into which to extract the user store.')]
+        (
+            'address',
+            'a',
+            None,
+            'localpart@domain-format identifier of the user store to extract.',
+        ),
+        ('destination', 'd', None, 'Directory into which to extract the user store.'),
+    ]
 
     def extractSubStore(self, localpart, domain, destinationPath):
         siteStore = self.parent.getStore()
         la = siteStore.findFirst(
             userbase.LoginMethod,
-            attributes.AND(userbase.LoginMethod.localpart == localpart,
-                           userbase.LoginMethod.domain == domain)).account
+            attributes.AND(
+                userbase.LoginMethod.localpart == localpart,
+                userbase.LoginMethod.domain == domain,
+            ),
+        ).account
         userbase.extractUserStore(la, destinationPath)
-
 
     def postOptions(self):
         localpart, domain = self.decodeCommandLine(self['address']).split('@', 1)
         destinationPath = filepath.FilePath(
-            self.decodeCommandLine(self['destination'])).child(localpart + '@' + domain + '.axiom')
+            self.decodeCommandLine(self['destination'])
+        ).child(localpart + '@' + domain + '.axiom')
         self.extractSubStore(localpart, domain, destinationPath)
-
 
 
 class Insert(axiomatic.AxiomaticCommand):
     name = 'insert-user'
     description = 'Insert a user store, such as one extracted with "extract-user", into a site store and login system.'
-    optParameters = [
-        ('userstore', 'u', None, 'Path to user store to be inserted.')
-        ]
+    optParameters = [('userstore', 'u', None, 'Path to user store to be inserted.')]
 
     def postOptions(self):
-        userbase.insertUserStore(self.parent.getStore(),
-                                 filepath.FilePath(self.decodeCommandLine(self['userstore'])))
+        userbase.insertUserStore(
+            self.parent.getStore(),
+            filepath.FilePath(self.decodeCommandLine(self['userstore'])),
+        )

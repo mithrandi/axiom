@@ -27,7 +27,6 @@ from axiom.plugins.axiom_plugins import Upgrade
 from axiom.test.util import CommandStub
 
 
-
 def axiomInvalidate(itemClass):
     """
     Remove the registered item class from the Axiom module system's memory,
@@ -60,6 +59,7 @@ def axiomInvalidate(itemClass):
         if k[0] == itemClass.typeName:
             upgrade._upgradeRegistry.pop(k)
 
+
 def axiomInvalidateModule(moduleObject):
     """
     Call L{axiomInvalidate} on all Item subclasses defined in a module.
@@ -68,13 +68,16 @@ def axiomInvalidateModule(moduleObject):
         if isinstance(v, item.MetaItem):
             axiomInvalidate(v)
 
+
 schemaModules = []
+
 
 def loadSchemaModule(name):
     schemaModules.append(namedModule(name))
     result = schemaModules[-1]
     choose(None)
     return result
+
 
 def choose(module=None):
     """
@@ -87,6 +90,7 @@ def choose(module=None):
 
     if module is not None:
         reload(module)
+
 
 oldapp = loadSchemaModule('axiom.test.oldapp')
 
@@ -108,6 +112,7 @@ path_postcopy = loadSchemaModule('axiom.test.path_postcopy')
 
 deleteswordapp = loadSchemaModule('axiom.test.deleteswordapp')
 
+
 class SchemaUpgradeTest(unittest.TestCase):
     def setUp(self):
         self.dbdir = filepath.FilePath(self.mktemp())
@@ -115,7 +120,6 @@ class SchemaUpgradeTest(unittest.TestCase):
     def openStore(self, dbg=False):
         self.currentStore = store.Store(self.dbdir, debug=dbg)
         return self.currentStore
-
 
     def closeStore(self):
         """
@@ -127,12 +131,13 @@ class SchemaUpgradeTest(unittest.TestCase):
             result = service.stopService()
         else:
             result = succeed(None)
+
         def close(ignored):
             self.currentStore.close()
             self.currentStore = None
+
         result.addCallback(close)
         return result
-
 
     def startStoreService(self):
         svc = IService(self.currentStore)
@@ -140,16 +145,16 @@ class SchemaUpgradeTest(unittest.TestCase):
         svc.startService()
 
 
-
 def _logMessagesFrom(f):
     L = []
     log.addObserver(L.append)
     d = maybeDeferred(f)
+
     def x(ign):
         log.removeObserver(L.append)
         return ign
-    return d.addBoth(x).addCallback(lambda ign: L)
 
+    return d.addBoth(x).addCallback(lambda ign: L)
 
 
 def callWithStdoutRedirect(f, *a, **kw):
@@ -167,9 +172,7 @@ def callWithStdoutRedirect(f, *a, **kw):
     return result, output
 
 
-
 class SwordUpgradeTest(SchemaUpgradeTest):
-
     def tearDown(self):
         choose(oldapp)
 
@@ -183,12 +186,13 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         choose(morenewapp)
         s = self.openStore()
         self.startStoreService()
+
         def afterUpgrade(result):
             player = s.getItemByID(playerID, autoUpgrade=False)
             sword = s.getItemByID(swordID, autoUpgrade=False)
             self._testPlayerAndSwordState(player, sword)
-        return s.whenFullyUpgraded().addCallback(afterUpgrade)
 
+        return s.whenFullyUpgraded().addCallback(afterUpgrade)
 
     def test_upgradeSkipVersion(self):
         """
@@ -198,19 +202,20 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         choose(onestepapp)
         s = self.openStore()
         self.startStoreService()
+
         def afterUpgrade(result):
             player = s.getItemByID(playerID, autoUpgrade=False)
             sword = s.getItemByID(swordID, autoUpgrade=False)
             self._testPlayerAndSwordState(player, sword)
+
         return s.whenFullyUpgraded().addCallback(afterUpgrade)
-
-
 
     def test_loggingAtAppropriateTimes(self):
         """
         Verify that log messages show up when we do upgrade work, but then don't
         when we don't.
         """
+
         def someLogging(logMessages):
             ok = False
             unrelatedMessages = []
@@ -220,19 +225,23 @@ class SwordUpgradeTest(SchemaUpgradeTest):
                     ok = True
                 else:
                     unrelatedMessages.append(msgstr)
-            self.failUnless(ok, "No messages related to upgrading: %r" % (unrelatedMessages,))
+            self.failUnless(
+                ok, "No messages related to upgrading: %r" % (unrelatedMessages,)
+            )
             s = self.openStore()
+
             def afterUpgrade(noLogMessages):
                 for nmsgdict in noLogMessages:
                     mm = u''.join(nmsgdict.get('message', ()))
                     if mm:
                         self.failIfIn(u'finished upgrading', mm)
+
             self.startStoreService()
-            return _logMessagesFrom(s.whenFullyUpgraded
-                                    ).addCallback(afterUpgrade)
+            return _logMessagesFrom(s.whenFullyUpgraded).addCallback(afterUpgrade)
 
-        return _logMessagesFrom(self.testTwoObjectUpgrade_UseService).addCallback(someLogging)
-
+        return _logMessagesFrom(self.testTwoObjectUpgrade_UseService).addCallback(
+            someLogging
+        )
 
     def test_basicErrorLogging(self):
         """
@@ -242,9 +251,8 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         choose(oldapp)
         s = self.openStore()
         swordID = oldapp.Sword(
-            store=s,
-            name=u'flaming vorpal doom',
-            hurtfulness=7).storeID
+            store=s, name=u'flaming vorpal doom', hurtfulness=7
+        ).storeID
         self.closeStore()
 
         choose(brokenapp)
@@ -262,8 +270,8 @@ class SwordUpgradeTest(SchemaUpgradeTest):
             self.assertEqual(len(loggedErrors), 1)
 
             oldType = item.declareLegacyItem(
-                oldapp.Sword.typeName,
-                oldapp.Sword.schemaVersion, {})
+                oldapp.Sword.typeName, oldapp.Sword.schemaVersion, {}
+            )
             e = upgradeError.value
             self.assertEqual(e.storeID, swordID)
             self.assertIdentical(e.oldType, oldType)
@@ -274,23 +282,16 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         d.addCallback(checkException)
         return d
 
-
     def _testTwoObjectUpgrade(self):
         choose(oldapp)
         s = self.openStore()
         self.assertIdentical(
-            store._typeNameToMostRecentClass[oldapp.Player.typeName],
-            oldapp.Player)
+            store._typeNameToMostRecentClass[oldapp.Player.typeName], oldapp.Player
+        )
 
-        sword = oldapp.Sword(
-            store=s,
-            name=u'flaming vorpal doom',
-            hurtfulness=7)
+        sword = oldapp.Sword(store=s, name=u'flaming vorpal doom', hurtfulness=7)
 
-        player = oldapp.Player(
-            store=s,
-            name=u'Milton',
-            sword=sword)
+        player = oldapp.Player(store=s, name=u'Milton', sword=sword)
 
         self.closeStore()
 
@@ -298,24 +299,20 @@ class SwordUpgradeTest(SchemaUpgradeTest):
 
         return player.storeID, sword.storeID
 
-
     def testTwoObjectUpgrade_OuterFirst(self):
         playerID, swordID = self._testTwoObjectUpgrade()
         player, sword = self._testLoadPlayerFirst(playerID, swordID)
         self._testPlayerAndSwordState(player, sword)
-
 
     def testTwoObjectUpgrade_InnerFirst(self):
         playerID, swordID = self._testTwoObjectUpgrade()
         player, sword = self._testLoadSwordFirst(playerID, swordID)
         self._testPlayerAndSwordState(player, sword)
 
-
     def testTwoObjectUpgrade_AutoOrder(self):
         playerID, swordID = self._testTwoObjectUpgrade()
         player, sword = self._testAutoUpgrade(playerID, swordID)
         self._testPlayerAndSwordState(player, sword)
-
 
     def testTwoObjectUpgrade_UseService(self):
         playerID, swordID = self._testTwoObjectUpgrade()
@@ -334,7 +331,6 @@ class SwordUpgradeTest(SchemaUpgradeTest):
             return IService(s).stopService()
 
         return s.whenFullyUpgraded().addCallback(afterUpgrade)
-
 
     def _testAutoUpgrade(self, playerID, swordID):
         choose(newapp)
@@ -379,7 +375,6 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         self.assertEquals(sword.activated, 1)
         self.assertEquals(player.activated, 1)
 
-
     def test_multipleLegacyVersions(self):
         """
         If multiple legacy schema versions are present, all of them should be
@@ -390,6 +385,7 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         choose(newapp)
         s = self.openStore()
         self.startStoreService()
+
         def afterFirstUpgrade(result):
             choose(morenewapp)
             s = self.openStore()
@@ -407,7 +403,6 @@ class SwordUpgradeTest(SchemaUpgradeTest):
         return d
 
 
-
 class SubStoreCompat(SwordUpgradeTest):
     def setUp(self):
         self.topdbdir = filepath.FilePath(self.mktemp())
@@ -416,14 +411,14 @@ class SubStoreCompat(SwordUpgradeTest):
     def openStore(self):
         self.currentTopStore = store.Store(self.topdbdir)
         if self.subStoreID is not None:
-            self.currentSubStore = self.currentTopStore.getItemByID(self.subStoreID).open()
+            self.currentSubStore = self.currentTopStore.getItemByID(
+                self.subStoreID
+            ).open()
         else:
-            ss = SubStore.createNew(self.currentTopStore,
-                                    ['sub'])
+            ss = SubStore.createNew(self.currentTopStore, ['sub'])
             self.subStoreID = ss.storeID
             self.currentSubStore = ss.open()
         return self.currentSubStore
-
 
     def closeStore(self):
         """
@@ -435,14 +430,15 @@ class SubStoreCompat(SwordUpgradeTest):
             result = service.stopService()
         else:
             result = succeed(None)
+
         def stopped(ignored):
             self.currentSubStore.close()
             self.currentTopStore.close()
             self.currentSubStore = None
             self.currentTopStore = None
+
         result.addCallback(stopped)
         return result
-
 
     def startStoreService(self):
         svc = IService(self.currentTopStore)
@@ -450,12 +446,12 @@ class SubStoreCompat(SwordUpgradeTest):
         svc.startService()
 
 
-
 class PathUpgrade(SchemaUpgradeTest):
     """
     Tests for items with path attributes, using
     registerAttributeCopyingUpgrader.
     """
+
     def _runPathUpgrade(self, module):
         """
         Load the 'oldpath' module, then upgrade items created from it to the
@@ -465,8 +461,7 @@ class PathUpgrade(SchemaUpgradeTest):
         reload(oldpath)
         self.openStore()
         nfp = self.currentStore.newFilePath("pathname")
-        oldpath.Path(store=self.currentStore,
-                     thePath=nfp)
+        oldpath.Path(store=self.currentStore, thePath=nfp)
         self.closeStore()
         axiomInvalidateModule(oldpath)
         reload(module)
@@ -474,19 +469,19 @@ class PathUpgrade(SchemaUpgradeTest):
         self.startStoreService()
         return nfp, self.currentStore.whenFullyUpgraded()
 
-
     def testUpgradePath(self):
         """
         Verify that you can upgrade a path attribute in the simplest possible
         way.
         """
         nfp, d = self._runPathUpgrade(newpath)
+
         def checkPathEquivalence(n):
             self.assertEquals(
-                self.currentStore.findUnique(newpath.Path).thePath.path,
-                nfp.path)
-        return d.addCallback(checkPathEquivalence)
+                self.currentStore.findUnique(newpath.Path).thePath.path, nfp.path
+            )
 
+        return d.addCallback(checkPathEquivalence)
 
     def test_postCopy(self):
         """
@@ -495,10 +490,13 @@ class PathUpgrade(SchemaUpgradeTest):
         """
         nfp, d = self._runPathUpgrade(path_postcopy)
         path2 = nfp.child("foo")
+
         def checkPath(_):
             self.assertEquals(
                 self.currentStore.findUnique(path_postcopy.Path).thePath.path,
-                path2.path)
+                path2.path,
+            )
+
         return d.addCallback(checkPath)
 
 
@@ -516,6 +514,7 @@ class IObsolete(Interface):
     Interface representing an undesirable feature.
     """
 
+
 class DeletionTest(SchemaUpgradeTest):
     def testCircular(self):
         """
@@ -525,8 +524,7 @@ class DeletionTest(SchemaUpgradeTest):
         """
         reload(oldcirc)
         self.openStore()
-        b = oldcirc.B(a=oldcirc.A(store=self.currentStore),
-                      store=self.currentStore)
+        b = oldcirc.B(a=oldcirc.A(store=self.currentStore), store=self.currentStore)
         b.a.b = b
 
         self.closeStore()
@@ -583,36 +581,29 @@ class DeletionTest(SchemaUpgradeTest):
         axiomInvalidateModule(newobsolete)
 
 
+two_upgrades_old = loadSchemaModule('axiom.test.upgrade_fixtures.two_upgrades_old')
 
-two_upgrades_old = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.two_upgrades_old')
+two_upgrades_new = loadSchemaModule('axiom.test.upgrade_fixtures.two_upgrades_new')
 
-two_upgrades_new = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.two_upgrades_new')
+reentrant_old = loadSchemaModule('axiom.test.upgrade_fixtures.reentrant_old')
 
-reentrant_old = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.reentrant_old')
+reentrant_new = loadSchemaModule('axiom.test.upgrade_fixtures.reentrant_new')
 
-reentrant_new = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.reentrant_new')
+override_init_old = loadSchemaModule('axiom.test.upgrade_fixtures.override_init_old')
 
-override_init_old = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.override_init_old')
-
-override_init_new = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.override_init_new')
+override_init_new = loadSchemaModule('axiom.test.upgrade_fixtures.override_init_new')
 
 replace_attribute_old = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.replace_attribute_old')
+    'axiom.test.upgrade_fixtures.replace_attribute_old'
+)
 
 replace_attribute_new = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.replace_attribute_new')
+    'axiom.test.upgrade_fixtures.replace_attribute_new'
+)
 
-replace_delete_old = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.replace_delete_old')
+replace_delete_old = loadSchemaModule('axiom.test.upgrade_fixtures.replace_delete_old')
 
-replace_delete_new = loadSchemaModule(
-    'axiom.test.upgrade_fixtures.replace_delete_new')
+replace_delete_new = loadSchemaModule('axiom.test.upgrade_fixtures.replace_delete_new')
 
 
 class DuringUpgradeTests(unittest.TestCase):
@@ -620,9 +611,9 @@ class DuringUpgradeTests(unittest.TestCase):
     Tests for upgraders' interactions with each other and with the Store while
     an upgrader is running.
     """
+
     def tearDown(self):
         choose(None)
-
 
     dbdir = None
     currentStore = None
@@ -640,7 +631,6 @@ class DuringUpgradeTests(unittest.TestCase):
         self.currentStore = store.Store(self.dbdir)
         return self.currentStore
 
-
     def test_upgradeLegacyReference(self):
         """
         Let a and b be two items which are being upgraded, instances of item
@@ -655,17 +645,17 @@ class DuringUpgradeTests(unittest.TestCase):
         """
         old = self.storeWithVersion(two_upgrades_old)
         storeID = two_upgrades_old.Referrer(
-            store=old,
-            referee=two_upgrades_old.Referee(store=old)).storeID
+            store=old, referee=two_upgrades_old.Referee(store=old)
+        ).storeID
 
         new = self.storeWithVersion(two_upgrades_new)
         referrer = new.getItemByID(storeID)
         referee = referrer.referee
         self.assertTrue(
             isinstance(referee, two_upgrades_new.Referee),
-            "%r is a %r but should be %r" % (
-                referee, type(referee), two_upgrades_new.Referee))
-
+            "%r is a %r but should be %r"
+            % (referee, type(referee), two_upgrades_new.Referee),
+        )
 
     def test_reentrantUpgraderFailure(self):
         """
@@ -679,9 +669,10 @@ class DuringUpgradeTests(unittest.TestCase):
         new = self.storeWithVersion(reentrant_new)
         self.assertRaises(errors.UpgraderRecursion, new.getItemByID, storeID)
         # A whitebox flourish to make sure our state tracking is correct:
-        self.failIf(new._upgradeManager._currentlyUpgrading,
-                    "No upgraders should currently be in progress.")
-
+        self.failIf(
+            new._upgradeManager._currentlyUpgrading,
+            "No upgraders should currently be in progress.",
+        )
 
     def test_overridenInitializerInUpgrader(self):
         """
@@ -697,20 +688,19 @@ class DuringUpgradeTests(unittest.TestCase):
         self.assertIdentical(upgraded, simpleSelf)
         self.assertIdentical(upgraded, simpleGotItem)
 
-
     def _reentrantReferenceForeignUpgrader(self, oldModule, newModule):
         old = self.storeWithVersion(oldModule)
         storeID = oldModule.Referrer(
-            store=old, referee=oldModule.Referee(
-                store=old, value=oldModule.OLD_VALUE)).storeID
+            store=old, referee=oldModule.Referee(store=old, value=oldModule.OLD_VALUE)
+        ).storeID
         new = self.storeWithVersion(newModule)
         referrer = new.getItemByID(storeID)
         upgraded = referrer.referee
         self.assertEqual(
             upgraded.value,
             newModule.NEW_VALUE,
-            "Upgraded reference does not have new value.")
-
+            "Upgraded reference does not have new value.",
+        )
 
     def test_referenceModifiedByForeignUpgrader(self):
         """
@@ -720,8 +710,8 @@ class DuringUpgradeTests(unittest.TestCase):
         new value of the attribute.
         """
         self._reentrantReferenceForeignUpgrader(
-            replace_attribute_old, replace_attribute_new)
-
+            replace_attribute_old, replace_attribute_new
+        )
 
     def test_cascadingDeletedReferenceModifiedByForeignUpgrader(self):
         """
@@ -731,9 +721,7 @@ class DuringUpgradeTests(unittest.TestCase):
         the reference attribute on the referrer should result in the new value
         of the attribute.
         """
-        self._reentrantReferenceForeignUpgrader(
-            replace_delete_old, replace_delete_new)
-
+        self._reentrantReferenceForeignUpgrader(replace_delete_old, replace_delete_new)
 
 
 class AxiomaticUpgradeTest(unittest.TestCase):
@@ -741,6 +729,7 @@ class AxiomaticUpgradeTest(unittest.TestCase):
     L{Upgrade} implements an I{axiomatic} subcommand for synchronously
     upgrading all items in a store.
     """
+
     def setUp(self):
         """
         Create a temporary on-disk Store and an instance of L{Upgrade}.
@@ -748,20 +737,17 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         self.dbdir = self.mktemp()
         self.store = store.Store(self.dbdir)
 
-
     def tearDown(self):
         """
         Close the temporary Store.
         """
         self.store.close()
 
-
     def test_providesCommandInterface(self):
         """
         L{Upgrade} provides L{IAxiomaticCommand}.
         """
         self.assertTrue(verifyObject(IAxiomaticCommand, Upgrade))
-
 
     def test_axiomaticSubcommand(self):
         """
@@ -770,7 +756,6 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         subCommands = axiomatic.Options().subCommands
         [options] = [cmd[2] for cmd in subCommands if cmd[0] == 'upgrade']
         self.assertIdentical(options, Upgrade)
-
 
     def test_successOutput(self):
         """
@@ -782,14 +767,14 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         result, output = callWithStdoutRedirect(cmd.parseOptions, [])
         self.assertEqual(output.getvalue(), 'Upgrade complete\n')
 
-
     def test_axiomaticUpgradeEverything(self):
         """
         L{Upgrade.upgradeStore} upgrades all L{Item}s.
         """
         choose(oldapp)
         swordID = oldapp.Sword(
-            store=self.store, name=u'broadsword', hurtfulness=5).storeID
+            store=self.store, name=u'broadsword', hurtfulness=5
+        ).storeID
         self.store.close()
 
         choose(deleteswordapp)
@@ -797,13 +782,10 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         cmd = Upgrade()
         cmd.parent = CommandStub(store.Store(self.dbdir), 'upgrade')
 
-        result, output = callWithStdoutRedirect(
-            cmd.parseOptions, ['--count', '100'])
+        result, output = callWithStdoutRedirect(cmd.parseOptions, ['--count', '100'])
 
         self.store = store.Store(self.dbdir)
-        self.assertRaises(
-            KeyError, self.store.getItemByID, swordID, autoUpgrade=False)
-
+        self.assertRaises(KeyError, self.store.getItemByID, swordID, autoUpgrade=False)
 
     def test_axiomaticUpgradeExceptionBubbling(self):
         """
@@ -813,7 +795,8 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         """
         choose(oldapp)
         swordID = oldapp.Sword(
-            store=self.store, name=u'longsword', hurtfulness=4).storeID
+            store=self.store, name=u'longsword', hurtfulness=4
+        ).storeID
         self.store.close()
 
         choose(brokenapp)
@@ -825,18 +808,19 @@ class AxiomaticUpgradeTest(unittest.TestCase):
 
         err = self.assertRaises(
             errors.ItemUpgradeError,
-            callWithStdoutRedirect, cmd.upgradeStore, self.store)
+            callWithStdoutRedirect,
+            cmd.upgradeStore,
+            self.store,
+        )
 
-        self.assertTrue(
-            err.originalFailure.check(brokenapp.UpgradersAreBrokenHere))
+        self.assertTrue(err.originalFailure.check(brokenapp.UpgradersAreBrokenHere))
 
         oldType = item.declareLegacyItem(
-            oldapp.Sword.typeName,
-            oldapp.Sword.schemaVersion, {})
+            oldapp.Sword.typeName, oldapp.Sword.schemaVersion, {}
+        )
         self.assertEqual(err.storeID, swordID)
         self.assertIdentical(err.oldType, oldType)
         self.assertIdentical(err.newType, brokenapp.Sword)
-
 
     def test_axiomaticUpgradePerformFails(self):
         """
@@ -845,8 +829,7 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         without exception.
         """
         choose(oldapp)
-        swordID = oldapp.Sword(
-            store=self.store, name=u'rapier', hurtfulness=3).storeID
+        swordID = oldapp.Sword(store=self.store, name=u'rapier', hurtfulness=3).storeID
         self.store.close()
 
         choose(brokenapp)
@@ -855,8 +838,7 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         cmd = Upgrade()
         cmd.parent = CommandStub(self.store, 'upgrade')
 
-        result, output = callWithStdoutRedirect(
-            cmd.parseOptions, ['--count', '100'])
+        result, output = callWithStdoutRedirect(cmd.parseOptions, ['--count', '100'])
         lines = output.getvalue().splitlines()
 
         # Ensure that the original error is output.
@@ -866,10 +848,12 @@ class AxiomaticUpgradeTest(unittest.TestCase):
         oldType = oldapp.Sword
         newType = store._typeNameToMostRecentClass[oldType.typeName]
         msg = cmd.errorMessageFormat % (
-            oldType.typeName, swordID, oldType.schemaVersion,
-            newType.schemaVersion)
+            oldType.typeName,
+            swordID,
+            oldType.schemaVersion,
+            newType.schemaVersion,
+        )
         self.assertTrue(lines[-1].startswith(msg))
-
 
     def test_upgradeStoreRecursing(self):
         """
@@ -882,7 +866,8 @@ class AxiomaticUpgradeTest(unittest.TestCase):
 
         swordIDs = [
             (ss1.storeID, oldapp.Sword(store=ss1.open(), name=u'foo').storeID),
-            (ss2.storeID, oldapp.Sword(store=ss2.open(), name=u'bar').storeID)]
+            (ss2.storeID, oldapp.Sword(store=ss2.open(), name=u'bar').storeID),
+        ]
 
         del ss1, ss2
         self.store.close()
@@ -897,14 +882,15 @@ class AxiomaticUpgradeTest(unittest.TestCase):
 
         for (ssid, swordID) in swordIDs:
             self.assertRaises(
-                KeyError,
-                self.store.getItemByID(ssid).open().getItemByID, swordID)
+                KeyError, self.store.getItemByID(ssid).open().getItemByID, swordID
+            )
 
 
 class StoreUpgradeTests(unittest.TestCase):
     """
     Tests for L{upgrade._StoreUpgrade}.
     """
+
     def setUp(self):
         self.store = Store()
         self._upgrader = _StoreUpgrade(self.store)

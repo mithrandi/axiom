@@ -1,4 +1,3 @@
-
 import os
 import sys
 import shutil
@@ -9,6 +8,7 @@ from twisted.trial import unittest
 from twisted.application.service import IService
 
 from axiom.store import Store
+
 
 def saveStub(funcobj, revision):
     """
@@ -27,21 +27,20 @@ def saveStub(funcobj, revision):
     filename = inspect.getfile(funcobj)
     dbfn = os.path.join(
         os.path.dirname(filename),
-        os.path.basename(filename).split("stub_")[1].split('.py')[0]+'.axiom')
+        os.path.basename(filename).split("stub_")[1].split('.py')[0] + '.axiom',
+    )
 
     s = Store(dbfn)
     s.transact(funcobj, s)
 
     s.close()
-    tarball = tarfile.open(dbfn+'.tbz2', 'w:bz2')
+    tarball = tarfile.open(dbfn + '.tbz2', 'w:bz2')
     tarball.add(os.path.basename(dbfn))
     tarball.close()
     shutil.rmtree(dbfn)
 
 
-
 class StubbedTest(unittest.TestCase):
-
     def openLegacyStore(self):
         """
         Extract the Store tarball associated with this test, open it, and return
@@ -51,13 +50,13 @@ class StubbedTest(unittest.TestCase):
         f = sys.modules[self.__module__].__file__
         dfn = os.path.join(
             os.path.dirname(f),
-            os.path.basename(f).split("test_")[1].split('.py')[0]+'.axiom')
+            os.path.basename(f).split("test_")[1].split('.py')[0] + '.axiom',
+        )
         arcname = dfn + '.tbz2'
         tarball = tarfile.open(arcname, 'r:bz2')
         for member in tarball.getnames():
             tarball.extract(member, temp)
         return Store(os.path.join(temp, os.path.basename(dfn)))
-
 
     def setUp(self):
         """
@@ -68,7 +67,6 @@ class StubbedTest(unittest.TestCase):
         self.service = IService(self.store)
         self.service.startService()
         return self.store.whenFullyUpgraded()
-
 
     def tearDown(self):
         return self.service.stopService()

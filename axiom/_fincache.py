@@ -5,18 +5,17 @@ from twisted.python import log
 
 from axiom import iaxiom
 
+
 class CacheFault(KeyError):
     """
     An item has fallen out of cache, but the weakref callback has not yet run.
     """
 
 
-
 class CacheInconsistency(RuntimeError):
     """
     A key being cached is already present in the cache.
     """
-
 
 
 def logErrorNoMatterWhat():
@@ -33,7 +32,6 @@ def logErrorNoMatterWhat():
             # Nothing can be done.  We can't get an emergency log file to write
             # to.  Don't bother.
             return
-
 
 
 def createCacheRemoveCallback(cacheRef, key, finalizer):
@@ -54,6 +52,7 @@ def createCacheRemoveCallback(cacheRef, key, finalizer):
     @param finalizer: A user-provided callable that will be called when the
         weakref callback runs.
     """
+
     def remove(reference):
         # Weakref callbacks cannot raise exceptions or DOOM ensues
         try:
@@ -68,8 +67,8 @@ def createCacheRemoveCallback(cacheRef, key, finalizer):
                         del cache.data[key]
         except:
             logErrorNoMatterWhat()
-    return remove
 
+    return remove
 
 
 class FinalizingCache:
@@ -81,10 +80,10 @@ class FinalizingCache:
     @type data: L{dict}
     @ivar data: The cached values.
     """
+
     def __init__(self, _ref=ref):
         self.data = {}
         self._ref = _ref
-
 
     def cache(self, key, value):
         """
@@ -105,14 +104,13 @@ class FinalizingCache:
             # get() for an explanation of why this might happen.
             if self.data[key]() is not None:
                 raise CacheInconsistency(
-                    "Duplicate cache key: %r %r %r" % (
-                        key, value, self.data[key]))
+                    "Duplicate cache key: %r %r %r" % (key, value, self.data[key])
+                )
         except KeyError:
             pass
         callback = createCacheRemoveCallback(self._ref(self), key, fin)
         self.data[key] = self._ref(value, callback)
         return value
-
 
     def uncache(self, key, value):
         """
@@ -136,7 +134,6 @@ class FinalizingCache:
             # comment in get() for an explanation of why this might happen.
             pass
 
-
     def get(self, key):
         """
         Get an entry from the cache by key.
@@ -158,7 +155,7 @@ class FinalizingCache:
             # and raise CacheFault (which is a KeyError subclass).
             del self.data[key]
             raise CacheFault(
-                "FinalizingCache has %r but its value is no more." % (key,))
+                "FinalizingCache has %r but its value is no more." % (key,)
+            )
         log.msg(interface=iaxiom.IStatEvent, stat_cache_hits=1, key=key)
         return o
-

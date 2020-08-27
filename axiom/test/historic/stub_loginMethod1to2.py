@@ -1,7 +1,7 @@
-
 from axiom.userbase import LoginSystem
 from axiom.test.test_userbase import GarbageProtocolHandler
 from axiom.test.historic.test_loginMethod1to2 import CREDENTIALS, GARBAGE_LEVEL
+
 
 def createDatabase(s):
     ls = LoginSystem(store=s)
@@ -10,6 +10,7 @@ def createDatabase(s):
     ss = acc.avatars.open()
     gph = GarbageProtocolHandler(store=ss, garbage=GARBAGE_LEVEL)
     gph.installOn(ss)
+
 
 from axiom.test.historic.stubloader import saveStub
 

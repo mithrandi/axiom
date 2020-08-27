@@ -11,10 +11,13 @@ from axiom.attributes import text, integer, reference, inmemory
 
 from axiom.upgrade import registerUpgrader
 
+
 class ActivateHelper:
     activated = 0
+
     def activate(self):
         self.activated += 1
+
 
 class Adventurer(ActivateHelper, Item):
     typeName = 'test_app_player'
@@ -22,6 +25,7 @@ class Adventurer(ActivateHelper, Item):
 
     name = text()
     activated = inmemory()
+
 
 class InventoryEntry(ActivateHelper, Item):
     typeName = 'test_app_inv'
@@ -31,6 +35,7 @@ class InventoryEntry(ActivateHelper, Item):
     owned = reference()
 
     activated = inmemory()
+
 
 class Sword(ActivateHelper, Item):
     typeName = 'test_app_sword'
@@ -42,16 +47,20 @@ class Sword(ActivateHelper, Item):
 
     def owner():
         def get(self):
-            return self.store.findUnique(InventoryEntry,
-                                         InventoryEntry.owned == self).owner
-        return get,
+            return self.store.findUnique(
+                InventoryEntry, InventoryEntry.owned == self
+            ).owner
+
+        return (get,)
 
     owner = property(*owner())
 
 
 def sword2to3(oldsword):
-    raise RuntimeError("The database does not contain any swords of version 2,"
-                       " so you should be able to skip this version.")
+    raise RuntimeError(
+        "The database does not contain any swords of version 2,"
+        " so you should be able to skip this version."
+    )
 
 
 registerUpgrader(sword2to3, 'test_app_sword', 2, 3)
@@ -63,12 +72,13 @@ registerUpgrader(sword2to3, 'test_app_sword', 2, 3)
 
 from axiom.item import declareLegacyItem
 
-declareLegacyItem(typeName = 'test_app_sword',
-                  schemaVersion = 2,
-                  attributes = dict(name=text(),
-                                    damagePerHit=integer(),
-                                    owner=reference(),
-                                    activated=inmemory()))
+declareLegacyItem(
+    typeName='test_app_sword',
+    schemaVersion=2,
+    attributes=dict(
+        name=text(), damagePerHit=integer(), owner=reference(), activated=inmemory()
+    ),
+)
 
 
 def upgradePlayerAndSword(oldplayer):
@@ -77,12 +87,14 @@ def upgradePlayerAndSword(oldplayer):
 
     oldsword = oldplayer.sword
 
-    newsword = oldsword.upgradeVersion('test_app_sword', 1, 3,
-                                       name=oldsword.name,
-                                       damagePerHit=oldsword.hurtfulness * 2)
-    invent = InventoryEntry(store=newsword.store,
-                            owner=newplayer,
-                            owned=newsword)
+    newsword = oldsword.upgradeVersion(
+        'test_app_sword',
+        1,
+        3,
+        name=oldsword.name,
+        damagePerHit=oldsword.hurtfulness * 2,
+    )
+    invent = InventoryEntry(store=newsword.store, owner=newplayer, owned=newsword)
     return newplayer, newsword
 
 
@@ -93,12 +105,12 @@ def player1to2(oldplayer):
 
 def sword1to3(oldsword):
     oldPlayerType = oldsword.store.getOldVersionOf('test_app_player', 1)
-    oldplayer = list(oldsword.store.query(oldPlayerType,
-                                          oldPlayerType.sword == oldsword))[0]
+    oldplayer = list(
+        oldsword.store.query(oldPlayerType, oldPlayerType.sword == oldsword)
+    )[0]
     newplayer, newsword = upgradePlayerAndSword(oldplayer)
     return newsword
 
 
 registerUpgrader(sword1to3, 'test_app_sword', 1, 3)
 registerUpgrader(player1to2, 'test_app_player', 1, 2)
-

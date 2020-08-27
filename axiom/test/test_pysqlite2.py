@@ -19,10 +19,8 @@ class ConnectionTestCase(ConnectionTestCaseMixin, TestCase):
     def createStubConnection(self, *a, **kw):
         return PySQLite2StubConnection(*a, **kw)
 
-
     def createAxiomConnection(self, underlyingConnection, *a, **kw):
         return Connection(underlyingConnection, *a, **kw)
-
 
     def createRealConnection(self):
         """

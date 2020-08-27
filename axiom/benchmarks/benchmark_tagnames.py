@@ -1,4 +1,3 @@
-
 """
 Benchmark the tagNames method of L{axiom.tags.Catalog}
 """
@@ -13,9 +12,9 @@ N_TAGS = 20
 N_COPIES = 5000
 N_LOOPS = 1000
 
+
 class TaggedObject(item.Item):
     name = attributes.text()
-
 
 
 def main():
@@ -26,6 +25,7 @@ def main():
     def tagObjects(tag, copies):
         for x in xrange(copies):
             c.tag(o, tag)
+
     for i in xrange(N_TAGS):
         s.transact(tagObjects, unicode(i), N_COPIES)
 
@@ -36,7 +36,6 @@ def main():
     benchmark.start()
     s.transact(getTags)
     benchmark.stop()
-
 
 
 if __name__ == '__main__':

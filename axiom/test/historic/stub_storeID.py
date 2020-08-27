@@ -12,13 +12,11 @@ class Dummy(Item):
     attribute = text(doc='text', allowNone=False)
 
 
-
 class Dummy2(Item):
     typeName = 'axiom_storeid_dummy2'
     schemaVersion = 1
 
     attribute = text(doc='text', allowNone=False)
-
 
 
 def createDatabase(s):
@@ -34,6 +32,5 @@ def createDatabase(s):
     i.deleteFromStore()
 
 
-
 if __name__ == '__main__':
-    saveStub(createDatabase, 0x1240846306fcda3289550cdf9515b2c7111d2bac)
+    saveStub(createDatabase, 0x1240846306FCDA3289550CDF9515B2C7111D2BAC)

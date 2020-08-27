@@ -6,13 +6,16 @@ from axiom.item import Item
 
 from axiom.upgrade import registerAttributeCopyingUpgrader
 
+
 class Path(Item):
     """
     Trivial Item class for testing upgrading.
     """
+
     schemaVersion = 2
     typeName = 'test_upgrade_path'
     thePath = path()
+
 
 def fixPath(it):
     """
@@ -20,5 +23,6 @@ def fixPath(it):
     have been copied.
     """
     it.thePath = it.thePath.child("foo")
+
 
 registerAttributeCopyingUpgrader(Path, 1, 2, postCopy=fixPath)

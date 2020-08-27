@@ -38,13 +38,16 @@ class RecorderService(Item):
     This is used by tests to make sure services get started when they should
     be.
     """
+
     implements(IService)
 
     started = boolean(
         doc="""
         A flag which is initially false and set to true once C{startService} is
         called.
-        """, default=False)
+        """,
+        default=False,
+    )
 
     name = "recorder"
 
@@ -55,13 +58,11 @@ class RecorderService(Item):
         """
         IServiceCollection(parent).addService(self)
 
-
     def startService(self):
         """
         Remember that this method was called.
         """
         self.started = True
-
 
     def stopService(self):
         """
@@ -69,12 +70,13 @@ class RecorderService(Item):
         """
 
 
-
 class StartTests(TestCase):
     """
     Test the axiomatic start sub-command.
     """
+
     maxDiff = None
+
     def setUp(self):
         """
         Work around Twisted #3178 by tricking trial into thinking something
@@ -82,14 +84,11 @@ class StartTests(TestCase):
         """
         return deferLater(reactor, 0, lambda: None)
 
-
     def _getRunDir(self, dbdir):
         return dbdir.child("run")
 
-
     def _getLogDir(self, dbdir):
         return self._getRunDir(dbdir).child("logs")
-
 
     def test_getArguments(self):
         """
@@ -112,34 +111,38 @@ class StartTests(TestCase):
             pidfileArg = []
         else:
             pidfileArg = ["--pidfile", run.child("axiomatic.pid").path]
-        restArg = [
-            "axiomatic-start", "--dbdir", dbdir.path, "--journal-mode", "WAL"]
+        restArg = ["axiomatic-start", "--dbdir", dbdir.path, "--journal-mode", "WAL"]
 
         self.assertEqual(
-            start.getArguments(store, []),
-            logfileArg + pidfileArg + restArg)
+            start.getArguments(store, []), logfileArg + pidfileArg + restArg
+        )
         self.assertEqual(
             start.getArguments(store, ["--logfile=foo"]),
-            ["--logfile=foo"] + pidfileArg + restArg)
+            ["--logfile=foo"] + pidfileArg + restArg,
+        )
         self.assertEqual(
             start.getArguments(store, ["--logfile", "foo"]),
-            ["--logfile", "foo"] + pidfileArg + restArg)
+            ["--logfile", "foo"] + pidfileArg + restArg,
+        )
         self.assertEqual(
             start.getArguments(store, ["-l", "foo"]),
-            ["-l", "foo"] + pidfileArg + restArg)
+            ["-l", "foo"] + pidfileArg + restArg,
+        )
         self.assertEqual(
             start.getArguments(store, ["--nodaemon"]),
-            ["--nodaemon"] + pidfileArg + restArg)
+            ["--nodaemon"] + pidfileArg + restArg,
+        )
         self.assertEqual(
-            start.getArguments(store, ["-n"]),
-            ["-n"] + pidfileArg + restArg)
+            start.getArguments(store, ["-n"]), ["-n"] + pidfileArg + restArg
+        )
         self.assertEqual(
             start.getArguments(store, ["--pidfile=foo"]),
-            ["--pidfile=foo"] + logfileArg + restArg)
+            ["--pidfile=foo"] + logfileArg + restArg,
+        )
         self.assertEqual(
             start.getArguments(store, ["--pidfile", "foo"]),
-            ["--pidfile", "foo"] + logfileArg + restArg)
-
+            ["--pidfile", "foo"] + logfileArg + restArg,
+        )
 
     def test_logDirectoryCreated(self):
         """
@@ -154,7 +157,6 @@ class StartTests(TestCase):
         start.getArguments(store, [])
         self.assertTrue(self._getLogDir(dbdir).exists())
 
-
     def test_parseOptions(self):
         """
         L{Start.parseOptions} adds axiomatic-suitable defaults for any
@@ -162,8 +164,10 @@ class StartTests(TestCase):
         argument list.
         """
         argv = []
+
         def fakeRun():
             argv.extend(sys.argv)
+
         options = axiomatic.Options()
         options['dbdir'] = dbdir = self.mktemp()
         start = axiomatic.Start()
@@ -176,10 +180,17 @@ class StartTests(TestCase):
             sys.argv[:] = original
         self.assertEqual(
             argv,
-            [sys.argv[0],
-             "-l", "foo", "--pidfile", "bar",
-             "axiomatic-start", "--dbdir", os.path.abspath(dbdir)])
-
+            [
+                sys.argv[0],
+                "-l",
+                "foo",
+                "--pidfile",
+                "bar",
+                "axiomatic-start",
+                "--dbdir",
+                os.path.abspath(dbdir),
+            ],
+        )
 
     def test_parseOptionsHelp(self):
         """
@@ -209,8 +220,6 @@ class StartTests(TestCase):
         # Also, we don't want to see twistd plugins here.
         self.assertNotIn("axiomatic-start", stdout.getvalue())
 
-
-
     def test_checkSystemVersion(self):
         """
         The L{IService} returned by L{AxiomaticStart.makeService} calls
@@ -224,12 +233,12 @@ class StartTests(TestCase):
         dbdir = self.mktemp()
         store = Store(dbdir)
         service = AxiomaticStart.makeService(
-            {'dbdir': dbdir, 'debug': False, 'journal-mode': None})
+            {'dbdir': dbdir, 'debug': False, 'journal-mode': None}
+        )
         self.assertEqual(store.query(SystemVersion).count(), 0)
         service.startService()
         self.assertEqual(store.query(SystemVersion).count(), 1)
         return service.stopService()
-
 
     def test_axiomOptions(self):
         """
@@ -241,12 +250,10 @@ class StartTests(TestCase):
         self.assertEqual(options['dbdir'], None)
         self.assertFalse(options['debug'])
         self.assertEqual(options['journal-mode'], None)
-        options.parseOptions(
-            ["--dbdir", "foo", "--debug", "--journal-mode", "WAL"])
+        options.parseOptions(["--dbdir", "foo", "--debug", "--journal-mode", "WAL"])
         self.assertEqual(options['dbdir'], 'foo')
         self.assertTrue(options['debug'])
         self.assertEqual(options['journal-mode'], 'WAL')
-
 
     def test_makeService(self):
         """
@@ -261,13 +268,13 @@ class StartTests(TestCase):
         store.close()
 
         service = AxiomaticStart.makeService(
-            {'dbdir': dbdir, 'debug': False, 'journal-mode': None})
+            {'dbdir': dbdir, 'debug': False, 'journal-mode': None}
+        )
         service.startService()
         service.stopService()
 
         store = Store(dbdir)
         self.assertTrue(store.getItemByID(recorder.storeID).started)
-
 
     def _getAxiomaticScript(self):
         here = FilePath(__file__)
@@ -286,10 +293,10 @@ class StartTests(TestCase):
             else:
                 # Nope, not there, give up.
                 raise SkipTest(
-                    "Could not find axiomatic script on path or at %s" % (
-                        axiomatic.path,))
+                    "Could not find axiomatic script on path or at %s"
+                    % (axiomatic.path,)
+                )
         return axiomatic
-
 
     def test_reactorSelection(self):
         """
@@ -323,17 +330,23 @@ class StartTests(TestCase):
         # the already installed reactor was the select reactor.
         argv = [
             sys.executable,
-            axiomatic, "-d", storePath,
-            "start", "--reactor", "select", "-n"]
+            axiomatic,
+            "-d",
+            storePath,
+            "start",
+            "--reactor",
+            "select",
+            "-n",
+        ]
         expected = [
             "reactor class: twisted.internet.selectreactor.SelectReactor.",
-            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>"]
+            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>",
+        ]
         proto, complete = AxiomaticStartProcessProtocol.protocolAndDeferred(expected)
 
         environ = os.environ.copy()
         reactor.spawnProcess(proto, sys.executable, argv, env=environ)
         return complete
-
 
     def test_reactorSelectionLongOptionStyle(self):
         """
@@ -358,17 +371,22 @@ class StartTests(TestCase):
         # the already installed reactor was the select reactor.
         argv = [
             sys.executable,
-            axiomatic, "-d", storePath,
-            "start", "--reactor=select", "-n"]
+            axiomatic,
+            "-d",
+            storePath,
+            "start",
+            "--reactor=select",
+            "-n",
+        ]
         expected = [
             "reactor class: twisted.internet.selectreactor.SelectReactor.",
-            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>"]
+            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>",
+        ]
         proto, complete = AxiomaticStartProcessProtocol.protocolAndDeferred(expected)
 
         environ = os.environ.copy()
         reactor.spawnProcess(proto, sys.executable, argv, env=environ)
         return complete
-
 
     def test_reactorSelectionShortOptionStyle(self):
         """
@@ -393,17 +411,23 @@ class StartTests(TestCase):
         # the already installed reactor was the select reactor.
         argv = [
             sys.executable,
-            axiomatic, "-d", storePath,
-            "start", "-r", "select", "-n"]
+            axiomatic,
+            "-d",
+            storePath,
+            "start",
+            "-r",
+            "select",
+            "-n",
+        ]
         expected = [
             "reactor class: twisted.internet.selectreactor.SelectReactor.",
-            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>"]
+            "reactor class: <class 'twisted.internet.selectreactor.SelectReactor'>",
+        ]
         proto, complete = AxiomaticStartProcessProtocol.protocolAndDeferred(expected)
 
         environ = os.environ.copy()
         reactor.spawnProcess(proto, sys.executable, argv, env=environ)
         return complete
-
 
 
 class AxiomaticStartProcessProtocol(ProcessProtocol):
@@ -418,9 +442,9 @@ class AxiomaticStartProcessProtocol(ProcessProtocol):
     @ivar _output: A C{str} giving all of the stdout from the child received
         thus far.
     """
+
     _success = False
     _output = ""
-
 
     def protocolAndDeferred(cls, expected):
         """
@@ -433,15 +457,14 @@ class AxiomaticStartProcessProtocol(ProcessProtocol):
         proto._complete = Deferred()
         proto._expected = expected
         return proto, proto._complete
-    protocolAndDeferred = classmethod(protocolAndDeferred)
 
+    protocolAndDeferred = classmethod(protocolAndDeferred)
 
     def errReceived(self, bytes):
         """
         Report the given unexpected stderr data.
         """
         msg("Received stderr from axiomatic: %r" % (bytes,))
-
 
     def outReceived(self, bytes):
         """
@@ -459,7 +482,6 @@ class AxiomaticStartProcessProtocol(ProcessProtocol):
                         self._success = True
                         self.transport.signalProcess("TERM")
 
-
     def processEnded(self, reason):
         """
         Check that the process exited in the way expected and that the required
@@ -470,39 +492,46 @@ class AxiomaticStartProcessProtocol(ProcessProtocol):
         if self._success:
             if platform.isWindows() or (
                 # Windows can't tell that we SIGTERM'd it, so sorry.
-                reason.check(ProcessTerminated) and
-                reason.value.signal == signal.SIGTERM):
+                reason.check(ProcessTerminated)
+                and reason.value.signal == signal.SIGTERM
+            ):
                 result.callback(None)
                 return
         # Something went wrong.
         result.errback(reason)
 
 
-
 class TestMisc(TestCase):
     """
     Test things not directly involving running axiomatic commands.
     """
+
     def test_axiomaticCommandProvides(self):
         """
         Test that AxiomaticCommand itself does not provide IAxiomaticCommand or
         IPlugin, but subclasses do.
         """
-        self.failIf(IAxiomaticCommand.providedBy(axiomatic.AxiomaticCommand), 'IAxiomaticCommand provided')
+        self.failIf(
+            IAxiomaticCommand.providedBy(axiomatic.AxiomaticCommand),
+            'IAxiomaticCommand provided',
+        )
         self.failIf(IPlugin.providedBy(axiomatic.AxiomaticCommand), 'IPlugin provided')
 
         class _TestSubClass(axiomatic.AxiomaticCommand):
             pass
 
-        self.failUnless(IAxiomaticCommand.providedBy(_TestSubClass), 'IAxiomaticCommand not provided')
+        self.failUnless(
+            IAxiomaticCommand.providedBy(_TestSubClass),
+            'IAxiomaticCommand not provided',
+        )
         self.failUnless(IPlugin.providedBy(_TestSubClass), 'IPlugin not provided')
-
 
 
 class AxiomaticTests(TestCase):
     """
     Test things relating to the I{axiomatic} command itself.
     """
+
     def test_journalMode(self):
         """
         I{axiomatic} sets the journal mode of the store according to

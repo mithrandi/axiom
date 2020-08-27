@@ -6,9 +6,9 @@ from axiom.attributes import text
 from axiom.tags import Catalog
 from axiom.test.historic.stubloader import saveStub
 
+
 class Dummy(Item):
     attribute = text(doc="dummy attribute")
-
 
 
 def createDatabase(s):
@@ -21,7 +21,6 @@ def createDatabase(s):
     i = Dummy(store=s)
     c.tag(i, u"external")
     c.tag(i, u"green")
-
 
 
 if __name__ == '__main__':

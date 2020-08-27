@@ -8,6 +8,7 @@ from axiom import store
 from twisted.trial.unittest import TestCase
 from twisted.python import filepath
 
+
 class A(item.Item):
     typeName = 'test_table_creator'
     schemaVersion = 1
@@ -19,7 +20,6 @@ class SomeError(Exception):
     """
     Dummy error for testing.
     """
-
 
 
 def createAndRaise(s):
@@ -35,6 +35,7 @@ class TableCreationTest(TestCase):
     """
     Tests for table creation.
     """
+
     def test_committedTableCreation(self):
         """
         When tables are created in a transaction which is committed, they should
@@ -50,7 +51,6 @@ class TableCreationTest(TestCase):
         self.assertIn(A, s2.typeToTableNameCache)
         s2.close()
 
-
     def test_revertedTableCreation(self):
         """
         When tables are created in a transaction which is reverted, they should
@@ -65,7 +65,6 @@ class TableCreationTest(TestCase):
         s2 = store.Store(storedir)
         self.assertNotIn(A, s2.typeToTableNameCache)
 
-
     def test_differentStoreTableCreation(self):
         """
         If two different stores are opened before a given table is created, and
@@ -77,13 +76,14 @@ class TableCreationTest(TestCase):
         s2 = store.Store(storedir)
         a1 = A(store=s1)
         a2 = A(store=s2)
-        self.assertEquals(list(s1.query(
-                    A, sort=A.storeID.ascending).getColumn("storeID")),
-                          [a1.storeID, a2.storeID])
-        self.assertEquals(list(s2.query(
-                    A, sort=A.storeID.ascending).getColumn("storeID")),
-                          [a1.storeID, a2.storeID])
-
+        self.assertEquals(
+            list(s1.query(A, sort=A.storeID.ascending).getColumn("storeID")),
+            [a1.storeID, a2.storeID],
+        )
+        self.assertEquals(
+            list(s2.query(A, sort=A.storeID.ascending).getColumn("storeID")),
+            [a1.storeID, a2.storeID],
+        )
 
     def test_dontReadTheSchemaSoMuch(self):
         """
@@ -97,7 +97,9 @@ class TableCreationTest(TestCase):
         above in L{TableCreationTest.test_differentStoreTableCreation}.
         """
         s1 = store.Store(filepath.FilePath(self.mktemp()))
+
         def die():
             self.fail("schema refreshed unnecessarily called too much")
+
         s1._startup = die
         A(store=s1)

@@ -4,6 +4,7 @@ from axiom.attributes import path
 
 from axiom.item import Item
 
+
 class Path(Item):
     schemaVersion = 1
     typeName = 'test_upgrade_path'

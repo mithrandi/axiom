@@ -1,4 +1,3 @@
-
 from twisted.trial.unittest import TestCase
 
 from axiom.item import Item
@@ -8,11 +7,14 @@ from axiom.slotmachine import hyper as super
 
 __metaclass__ = type
 
+
 class X:
     xm = 0
+
     def m(self):
         self.xm += 1
         return self.xm
+
 
 class Y(X):
     ym = 0
@@ -23,16 +25,20 @@ class Y(X):
         ret += 1
         return ret
 
+
 class Z(X):
     zm = 0
+
     def m(self):
         ret = super(Z, self).m()
         ret += 1
         self.zm += 1
         return ret
 
+
 class XYZ(Y, Z):
     pass
+
 
 class ItemXYZ(Item, XYZ):
     typeName = 'item_xyz'
@@ -44,7 +50,6 @@ class ItemXYZ(Item, XYZ):
 
 
 class TestBorrowedMixins(TestCase):
-
     def testSanity(self):
         xyz = XYZ()
         val = xyz.m()

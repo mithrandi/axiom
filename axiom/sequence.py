@@ -3,6 +3,7 @@
 from axiom.item import Item
 from axiom.attributes import reference, integer, AND
 
+
 class _ListItem(Item):
     typeName = 'list_item'
     schemaVersion = 1
@@ -10,6 +11,7 @@ class _ListItem(Item):
     _index = integer()
     _value = reference()
     _container = reference()
+
 
 class List(Item):
     typeName = 'list'
@@ -26,14 +28,16 @@ class List(Item):
         return self.store.query(_ListItem, _ListItem._container == self)
 
     def _getListItem(self, index):
-        return list(self.store.query(_ListItem,
-                                     AND(_ListItem._container == self,
-                                         _ListItem._index == index)))[0]
+        return list(
+            self.store.query(
+                _ListItem, AND(_ListItem._container == self, _ListItem._index == index)
+            )
+        )[0]
 
     def _delListItem(self, index, resetIndexes=True):
-        for li in self.store.query(_ListItem,
-                                   AND(_ListItem._container == self,
-                                       _ListItem._index == index)):
+        for li in self.store.query(
+            _ListItem, AND(_ListItem._container == self, _ListItem._index == index)
+        ):
             li.deleteFromStore(deleteObject=True)
             break
 
@@ -69,11 +73,13 @@ class List(Item):
 
     def __add__(self, other):
         return list(self) + list(other)
+
     def __radd__(self, other):
         return list(other) + list(self)
 
     def __mul__(self, other):
         return list(self) * other
+
     def __rmul__(self, other):
         return other * list(self)
 
@@ -94,8 +100,9 @@ class List(Item):
         assert not isinstance(index, slice), 'slices are not supported (yet)'
         self._getListItem(index).deleteFromStore()
         if index < self.length - 1:
-            for item in self.store.query(_ListItem, AND(
-                    _ListItem._container == self, _ListItem._index > index)):
+            for item in self.store.query(
+                _ListItem, AND(_ListItem._container == self, _ListItem._index > index)
+            ):
                 item._index -= 1
         self.length -= 1
 
@@ -122,16 +129,15 @@ class List(Item):
         index = min(index, self.length)
         # This uses list() in case our contents change halfway through.
         # But does that _really_ work?
-        for li in list(self.store.query(_ListItem,
-                                        AND(_ListItem._container == self,
-                                            _ListItem._index >= index))):
+        for li in list(
+            self.store.query(
+                _ListItem, AND(_ListItem._container == self, _ListItem._index >= index)
+            )
+        ):
             # XXX: The performance of this operation probably sucks
             # compared to what it would be with an UPDATE.
             li._index += 1
-        _ListItem(store=self.store,
-                  _value=value,
-                  _container=self,
-                  _index=index)
+        _ListItem(store=self.store, _value=value, _container=self, _index=index)
         self.length += 1
 
     def pop(self, index=None):
@@ -148,9 +154,11 @@ class List(Item):
     def reverse(self):
         # XXX: Also needs to be an atomic action.
         length = 0
-        for li in list(self.store.query(_ListItem,
-                                        _ListItem._container == self,
-                                        sort=_ListItem._index.desc)):
+        for li in list(
+            self.store.query(
+                _ListItem, _ListItem._container == self, sort=_ListItem._index.desc
+            )
+        ):
             li._index = length
             length += 1
         self.length = length
@@ -164,12 +172,14 @@ class List(Item):
         index = 0
         for li in self._queryListItems():
             # XXX: Well, can it?
-            assert index < len(values), \
-                   '_ListItems were added during a sort (can this happen?)'
+            assert index < len(
+                values
+            ), '_ListItems were added during a sort (can this happen?)'
             li._index = index
             li._value = values[index]
             index += 1
 
     def count(self, value):
-        return self.store.count(_ListItem, AND(
-                _ListItem._container == self, _ListItem._value == value))
+        return self.store.count(
+            _ListItem, AND(_ListItem._container == self, _ListItem._value == value)
+        )

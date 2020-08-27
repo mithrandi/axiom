@@ -1,4 +1,3 @@
-
 from twisted.trial import unittest
 from twisted.python.components import registerAdapter
 
@@ -11,17 +10,22 @@ from zope.interface import Interface, implements, Attribute
 
 
 class IValueHaver(Interface):
-    value = Attribute("""
+    value = Attribute(
+        """
     An integer that you can add to other integers.
-    """)
+    """
+    )
+
 
 class IScalingFactor(Interface):
-    scale = Attribute("""
+    scale = Attribute(
+        """
     An integer that a sum can be multiplied by.
-    """)
+    """
+    )
+
 
 class ISumProducer(Interface):
-
     def doSum():
         """
         Produce a sum.
@@ -34,11 +38,13 @@ class SumContributor(Item):
 
     value = integer()
 
+
 class MinusThree(object):
     implements(IValueHaver)
 
     def __init__(self, otherValueHaver):
         self.value = otherValueHaver.value - 3
+
 
 class SubtractThree(Item):
     schemaVersion = 1
@@ -56,15 +62,18 @@ class PlusTwo(Item):
     """
     Example powerup with installation information.
     """
+
     implements(IValueHaver)
     powerupInterfaces = (IValueHaver,)
 
     value = integer(default=2)
 
+
 class PlusOneTimesFour(Item):
     """
     Example powerup with dynamic installation information.
     """
+
     implements(IScalingFactor, IValueHaver)
     scale = integer(default=1)
     value = integer(default=4)
@@ -72,6 +81,7 @@ class PlusOneTimesFour(Item):
     def __getPowerupInterfaces__(self, powerup):
         yield (IScalingFactor, 1)
         yield (IValueHaver, 3)
+
 
 class Summer(Item):
     schemaVersion = 1
@@ -98,6 +108,7 @@ class Summer(Item):
             total *= value
         return total
 
+
 class BrokenPowerup(Item):
     stuff = integer()
 
@@ -106,7 +117,6 @@ class BrokenPowerup(Item):
 
 
 class PowerUpTest(unittest.TestCase):
-
     def testBasicPowerups(self):
         # tests an interaction between __conform__ and other stuff
 
@@ -121,7 +131,6 @@ class PowerUpTest(unittest.TestCase):
         self.assertEquals(mm.doSum(), 6)
 
         s.close()
-
 
     def testPowerupIdentity(self):
         s = Store()
@@ -139,8 +148,6 @@ class PowerUpTest(unittest.TestCase):
 
         s.close()
 
-
-
     def test_automaticPowerupInstall(self):
         """
         Powerups with 'powerupInterfaces' attributes can be installed
@@ -154,7 +161,6 @@ class PowerUpTest(unittest.TestCase):
         s.powerUp(p)
 
         self.assertEquals(mm.doSum(), 2)
-
 
     def test_dynamicAutomaticPowerupInstall(self):
         """
@@ -170,7 +176,6 @@ class PowerUpTest(unittest.TestCase):
 
         self.assertEquals(mm.doSum(), 4)
 
-
     def test_dynamicAutomaticPowerupFailure(self):
         """
         Powerups with '__getPowerupInterfaces__' methods that don't return
@@ -181,10 +186,11 @@ class PowerUpTest(unittest.TestCase):
         s.powerUp(mm, ISumProducer)
         p = BrokenPowerup(store=s)
         err = self.assertRaises(ValueError, s.powerUp, p)
-        self.assertEquals(str(err),
-                          'return value from %r.__getPowerupInterfaces__'
-                          ' not an iterable of 2-tuples' % (p,))
-
+        self.assertEquals(
+            str(err),
+            'return value from %r.__getPowerupInterfaces__'
+            ' not an iterable of 2-tuples' % (p,),
+        )
 
     def test_automaticPowerDown(self):
         """
@@ -218,12 +224,11 @@ class PowerUpTest(unittest.TestCase):
         s = Store()
         mm = Summer(store=s)
         s.powerUp(
-            SubtractThree(
-                store=s, valueHaver=SumContributor(store=s, value=5)),
-            IValueHaver)
+            SubtractThree(store=s, valueHaver=SumContributor(store=s, value=5)),
+            IValueHaver,
+        )
         self.assertEquals(mm.doSum(), 2)
         s.close()
-
 
     def testNoIndirectedIndirection(self):
         """
@@ -239,8 +244,8 @@ class PowerUpTest(unittest.TestCase):
         self.assertEqual(list(s.powerupsFor(IPowerupIndirector)), [])
 
 
-
 from twisted.application.service import IService, Service
+
 
 class SillyService(Item, Service):
     typeName = 'test_silly_service'
@@ -261,8 +266,8 @@ class SillyService(Item, Service):
         self.running = 0
         self.stopped += 1
 
-class SpecialCaseTest(unittest.TestCase):
 
+class SpecialCaseTest(unittest.TestCase):
     def testStoreServicePowerup(self):
         s = Store()
         ss = SillyService(store=s)
@@ -285,27 +290,27 @@ class SpecialCaseTest(unittest.TestCase):
         self.assertEquals(ss.running, 0)
 
 
-
 class ItemWithAdapter(Item):
     """
     An item which will have an adapter registered for its type.
     """
+
     attribute = integer()
 
-registerAdapter(lambda o: 42, ItemWithAdapter, ISumProducer)
 
+registerAdapter(lambda o: 42, ItemWithAdapter, ISumProducer)
 
 
 class InMemoryPowerupTests(unittest.TestCase):
     """
     Tests for the behavior of powerups which are not database-resident.
     """
+
     def _createEmpowered(self, withStore=True):
         powerup = object()
         item = SumContributor(store=Store() if withStore else None)
         item.inMemoryPowerUp(powerup, ISumProducer)
         return powerup, item
-
 
     def test_powerupsFor(self):
         """
@@ -314,7 +319,6 @@ class InMemoryPowerupTests(unittest.TestCase):
         """
         powerup, item = self._createEmpowered()
         self.assertEqual(list(item.powerupsFor(ISumProducer)), [powerup])
-
 
     def test_inMemoryPriority(self):
         """
@@ -326,7 +330,6 @@ class InMemoryPowerupTests(unittest.TestCase):
         item.powerUp(item, ISumProducer)
         self.assertIdentical(ISumProducer(item), powerup)
 
-
     def test_conformWithoutStore(self):
         """
         Adaptation (through L{Item.__conform__}) should be allowed even if the
@@ -334,7 +337,6 @@ class InMemoryPowerupTests(unittest.TestCase):
         """
         powerup, item = self._createEmpowered(withStore=False)
         self.assertIdentical(ISumProducer(item), powerup)
-
 
     def test_noPowerups(self):
         """
@@ -345,7 +347,6 @@ class InMemoryPowerupTests(unittest.TestCase):
         item = SumContributor()
         self.assertEquals(list(item.powerupsFor(ISumProducer)), [])
         self.assertRaises(TypeError, ISumProducer, item)
-
 
     def test_adapterNoPowerups(self):
         """

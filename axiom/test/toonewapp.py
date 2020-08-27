@@ -6,10 +6,13 @@ from axiom.attributes import text, integer, reference, inmemory
 
 from axiom.upgrade import registerUpgrader
 
+
 class ActivateHelper:
     activated = 0
+
     def activate(self):
         self.activated += 1
+
 
 class Adventurer(ActivateHelper, Item):
     typeName = 'test_app_player'
@@ -17,6 +20,7 @@ class Adventurer(ActivateHelper, Item):
 
     name = text()
     activated = inmemory()
+
 
 class InventoryEntry(ActivateHelper, Item):
     typeName = 'test_app_inv'
@@ -26,6 +30,7 @@ class InventoryEntry(ActivateHelper, Item):
     owned = reference()
 
     activated = inmemory()
+
 
 class Sword(ActivateHelper, Item):
     typeName = 'test_app_sword'
@@ -37,9 +42,11 @@ class Sword(ActivateHelper, Item):
 
     def owner():
         def get(self):
-            return self.store.findUnique(InventoryEntry,
-                                         InventoryEntry.owned == self).owner
-        return get,
+            return self.store.findUnique(
+                InventoryEntry, InventoryEntry.owned == self
+            ).owner
+
+        return (get,)
 
     owner = property(*owner())
 
@@ -50,9 +57,7 @@ def sword2to3(oldsword):
     itrbl = oldsword.store.query(n)
     newsword.name = oldsword.name
     newsword.damagePerHit = oldsword.damagePerHit
-    invent = InventoryEntry(store=newsword.store,
-                            owner=oldsword.owner,
-                            owned=newsword)
+    invent = InventoryEntry(store=newsword.store, owner=oldsword.owner, owned=newsword)
     return newsword
 
 

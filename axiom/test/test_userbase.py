@@ -1,4 +1,3 @@
-
 """
 Tests for L{axiom.userbase}.
 """
@@ -32,8 +31,10 @@ from axiom import errors
 from axiom import dependency
 from axiom.userbase import getTestContext
 
+
 class IGarbage(Interface):
     pass
+
 
 class GarbageProtocolHandler(Item):
     schemaVersion = 1
@@ -44,19 +45,21 @@ class GarbageProtocolHandler(Item):
 
     implements(IGarbage)
 
+
 SECRET = 'bananas'
+
 
 class UserBaseTest(unittest.TestCase):
     """
     Tests for L{axiom.userbase} with an on-disk store.
     @ivar store: The C{Store} object for the items tested.
     """
+
     def setUp(self):
         """
         Set up for testing with an on-disk store.
         """
         self.store = Store(FilePath(self.mktemp()))
-
 
     def logInAndCheck(self, username, domain='localhost'):
         """
@@ -64,16 +67,15 @@ class UserBaseTest(unittest.TestCase):
         managed by L{axiom.userbase.LoginSystem}.
         """
         s = self.store
+
         def _speedup():
             l = userbase.LoginSystem(store=s)
             dependency.installOn(l, s)
             s.checkpoint()
-            p = Portal(IRealm(s),
-                       [ICredentialsChecker(s)])
+            p = Portal(IRealm(s), [ICredentialsChecker(s)])
 
             a = l.addAccount(username, 'localhost', SECRET)
-            gph = GarbageProtocolHandler(store=a.avatars.open(),
-                                         garbage=0)
+            gph = GarbageProtocolHandler(store=a.avatars.open(), garbage=0)
             dependency.installOn(gph, gph.store)
             return p, gph
 
@@ -84,8 +86,9 @@ class UserBaseTest(unittest.TestCase):
             self.assertEquals(avatar, gph)
             logout()
 
-        return p.login(UsernamePassword('bob@localhost', SECRET), None, IGarbage
-                       ).addCallback(wasItGph)
+        return p.login(
+            UsernamePassword('bob@localhost', SECRET), None, IGarbage
+        ).addCallback(wasItGph)
 
     def testBasicLogin(self):
         self.logInAndCheck('bob')
@@ -102,6 +105,7 @@ class MemoryUserBaseTest(UserBaseTest):
     Tests for L{axiom.userbase} with an in-memory store.
     @ivar store: The C{Store} object for the items tested.
     """
+
     def setUp(self):
         """
         Set up for testing with an in-memory store.
@@ -118,17 +122,15 @@ class CommandTestCase(unittest.TestCase):
         self.dbdir = FilePath(self.mktemp())
         self.store = Store(self.dbdir)
 
-
     def tearDown(self):
         self.store.close()
-
 
     def _login(self, avatarId, password):
         cc = ICredentialsChecker(self.store)
         p = Portal(IRealm(self.store), [cc])
-        return p.login(UsernamePassword(avatarId, password), None,
-                       lambda orig, default: orig)
-
+        return p.login(
+            UsernamePassword(avatarId, password), None, lambda orig, default: orig
+        )
 
     def assertImplements(self, obj, interface):
         """
@@ -139,7 +141,6 @@ class CommandTestCase(unittest.TestCase):
         implement.
         """
         self.failUnless(interface.providedBy(interface(obj, None)))
-
 
     def userbase(self, *args):
         """
@@ -156,7 +157,6 @@ class CommandTestCase(unittest.TestCase):
             sys.stdout = stdout
         return output.getvalue().splitlines()
 
-
     def test_install(self):
         """
         Create a database, install userbase and check that the store
@@ -167,7 +167,6 @@ class CommandTestCase(unittest.TestCase):
         self.assertImplements(self.store, IRealm)
         self.assertImplements(self.store, ICredentialsChecker)
 
-
     def test_userCreation(self):
         """
         Create a user on a store, implicitly installing userbase, then try to
@@ -177,14 +176,14 @@ class CommandTestCase(unittest.TestCase):
 
         def cb((interface, avatar, logout)):
             ss = avatar.avatars.open()
-            self.assertEquals(list(userbase.getAccountNames(ss)),
-                              [(u'alice', u'localhost')])
+            self.assertEquals(
+                list(userbase.getAccountNames(ss)), [(u'alice', u'localhost')]
+            )
             self.assertNotEquals(avatar.passwordHash, None)
             logout()
 
         d = self._login('alice@localhost', SECRET)
         return d.addCallback(cb)
-
 
     def test_listOnClean(self):
         """
@@ -193,7 +192,6 @@ class CommandTestCase(unittest.TestCase):
         """
         output = self.userbase('list')
         self.assertEquals(output, ['No accounts'])
-
 
     def test_list(self):
         """
@@ -204,7 +202,6 @@ class CommandTestCase(unittest.TestCase):
         self.userbase('create', 'bob', 'localhost', SECRET)
         output = self.userbase('list')
         self.assertEquals(output, ['alice@localhost', 'bob@localhost'])
-
 
     def test_listWithDisabled(self):
         """
@@ -217,11 +214,9 @@ class CommandTestCase(unittest.TestCase):
         def cb((interface, avatar, logout)):
             avatar.disabled = 1
             output = self.userbase('list')
-            self.assertEquals(output,
-                              ['alice@localhost', 'bob@localhost [DISABLED]'])
+            self.assertEquals(output, ['alice@localhost', 'bob@localhost [DISABLED]'])
 
         return self._login('bob@localhost', SECRET).addCallback(cb)
-
 
     def test_listOffering(self):
         """
@@ -232,11 +227,9 @@ class CommandTestCase(unittest.TestCase):
         self.userbase('install')
         realm = IRealm(self.store)
         substoreItem = SubStore.createNew(self.store, ('app', name))
-        realm.addAccount(name, None, None, internal=True,
-                         avatars=substoreItem)
+        realm.addAccount(name, None, None, internal=True, avatars=substoreItem)
         output = self.userbase('list')
         self.assertEquals(output, [name])
-
 
 
 def pvals(m):
@@ -254,17 +247,13 @@ class AccountTestCase(unittest.TestCase):
         acc = ls.addAccount('username', 'dom.ain', 'password')
         ss = acc.avatars.open()
 
-        self.assertEquals(
-            list(userbase.getAccountNames(ss)),
-            [('username', 'dom.ain')])
+        self.assertEquals(list(userbase.getAccountNames(ss)), [('username', 'dom.ain')])
 
         acc.addLoginMethod(u'nameuser', u'ain.dom')
 
         names = list(userbase.getAccountNames(ss))
         names.sort()
-        self.assertEquals(
-            names,
-            [('nameuser', 'ain.dom'), ('username', 'dom.ain')])
+        self.assertEquals(names, [('nameuser', 'ain.dom'), ('username', 'dom.ain')])
 
     def testGetLoginMethods(self):
         """
@@ -279,8 +268,9 @@ class AccountTestCase(unittest.TestCase):
         ss = acc.avatars.open()
 
         for protocol in (None, u'speech'):
-            self.assertEquals(list(userbase.getAccountNames(ss, protocol)),
-                              [('username', 'dom.ain')])
+            self.assertEquals(
+                list(userbase.getAccountNames(ss, protocol)), [('username', 'dom.ain')]
+            )
 
         # defaults to ANY_PROTOCOL
         acc.addLoginMethod(u'username2', u'dom.ain')
@@ -288,10 +278,10 @@ class AccountTestCase(unittest.TestCase):
         # check that searching for protocol=speech also gives us the
         # ANY_PROTOCOL LoginMethod
         for protocol in (None, u'speech'):
-            self.assertEquals(sorted(userbase.getAccountNames(ss, protocol)),
-                              [('username', 'dom.ain'),
-                               ('username2', 'dom.ain')])
-
+            self.assertEquals(
+                sorted(userbase.getAccountNames(ss, protocol)),
+                [('username', 'dom.ain'), ('username2', 'dom.ain')],
+            )
 
     def testAvatarStoreState(self):
         """
@@ -308,19 +298,25 @@ class AccountTestCase(unittest.TestCase):
 
         # this is allowed, if weird
         unrelatedAccount = ls.addAccount(
-            'elseice', 'dom.ain', 'password',
-            avatars=SubStore.createNew(s, ('crazy', 'what')))
+            'elseice',
+            'dom.ain',
+            'password',
+            avatars=SubStore.createNew(s, ('crazy', 'what')),
+        )
 
         # this is not allowed.
-        self.assertRaises(errors.DuplicateUniqueItem,
-                          ls.addAccount,
-                          'bob', 'ain.dom', 'xpassword',
-                          avatars=acc.avatars)
+        self.assertRaises(
+            errors.DuplicateUniqueItem,
+            ls.addAccount,
+            'bob',
+            'ain.dom',
+            'xpassword',
+            avatars=acc.avatars,
+        )
 
         # Make sure that our stupid call to addAccount did not corrupt
         # anything, because we are stupid
         self.assertEquals(acc.avatars.open().query(userbase.LoginAccount).count(), 1)
-
 
     def testParallelLoginMethods(self):
         dbdir = FilePath(self.mktemp())
@@ -334,9 +330,8 @@ class AccountTestCase(unittest.TestCase):
 
         self.assertEquals(loginMethods.count(), 1)
         self.assertEquals(
-            [pvals(m) for m in loginMethods],
-            [pvals(m) for m in subStoreLoginMethods])
-
+            [pvals(m) for m in loginMethods], [pvals(m) for m in subStoreLoginMethods]
+        )
 
     def testSiteLoginMethodCreator(self):
         dbdir = FilePath(self.mktemp())
@@ -352,20 +347,23 @@ class AccountTestCase(unittest.TestCase):
                 domain=u'example.org',
                 verified=True,
                 protocol=u'test',
-                internal=False)
+                internal=False,
+            )
 
             loginMethods = s.query(
-                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending)
+                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending
+            )
 
             subStoreLoginMethods = acc.avatars.open().query(
-                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending)
+                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending
+            )
 
             self.assertEquals(loginMethods.count(), 2)
 
             self.assertEquals(
                 [pvals(m) for m in loginMethods],
-                [pvals(m) for m in subStoreLoginMethods])
-
+                [pvals(m) for m in subStoreLoginMethods],
+            )
 
     def testUserLoginMethodCreator(self):
         dbdir = FilePath(self.mktemp())
@@ -383,20 +381,23 @@ class AccountTestCase(unittest.TestCase):
                 domain=u'example.org',
                 verified=True,
                 protocol=u'test',
-                internal=False)
+                internal=False,
+            )
 
             loginMethods = s.query(
-                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending)
+                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending
+            )
 
             subStoreLoginMethods = ss.query(
-                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending)
+                userbase.LoginMethod, sort=userbase.LoginMethod.storeID.ascending
+            )
 
             self.assertEquals(loginMethods.count(), 2)
 
             self.assertEquals(
                 [pvals(m) for m in loginMethods],
-                [pvals(m) for m in subStoreLoginMethods])
-
+                [pvals(m) for m in subStoreLoginMethods],
+            )
 
     def testDomainNames(self):
         s = Store()
@@ -406,7 +407,8 @@ class AccountTestCase(unittest.TestCase):
             (u'local', u'example.net', True),
             (u'remote', u'example.org', False),
             (u'another', u'example.com', True),
-            (u'brokenguy', None, True)]:
+            (u'brokenguy', None, True),
+        ]:
             userbase.LoginMethod(
                 store=s,
                 localpart=localpart,
@@ -414,9 +416,9 @@ class AccountTestCase(unittest.TestCase):
                 verified=True,
                 account=s,
                 protocol=u'test',
-                internal=internal)
+                internal=internal,
+            )
         self.assertEquals(userbase.getDomainNames(s), [u"example.com", u"example.net"])
-
 
 
 class ThingThatMovesAround(Item):
@@ -427,6 +429,7 @@ class ThingThatMovesAround(Item):
 
     def run():
         pass
+
 
 class SubStoreMigrationTestCase(unittest.TestCase):
 
@@ -441,8 +444,7 @@ class SubStoreMigrationTestCase(unittest.TestCase):
         self.ls = userbase.LoginSystem(store=self.store)
         self.scheduler = IScheduler(self.store)
 
-        self.account = self.ls.addAccount(
-            self.localpart, self.domain, u'PASSWORD')
+        self.account = self.ls.addAccount(self.localpart, self.domain, u'PASSWORD')
 
         self.accountStore = self.account.avatars.open()
 
@@ -451,17 +453,16 @@ class SubStoreMigrationTestCase(unittest.TestCase):
         self.origdir = self.accountStore.dbdir
         self.destdir = FilePath(self.mktemp())
 
-
     def test_extraction(self):
         """
         Ensure that user store extraction works correctly,
         particularly in the presence of timed events.
         """
-        thing = ThingThatMovesAround(store=self.accountStore,
-                                     superValue=self.IMPORTANT_VALUE)
+        thing = ThingThatMovesAround(
+            store=self.accountStore, superValue=self.IMPORTANT_VALUE
+        )
         self.ss.schedule(thing, Time() + datetime.timedelta(days=1))
         self.test_noTimedEventsExtraction()
-
 
     def test_noTimedEventsExtraction(self):
         """
@@ -469,15 +470,14 @@ class SubStoreMigrationTestCase(unittest.TestCase):
         events are present.
         """
         userbase.extractUserStore(self.account, self.destdir)
-        self.assertEquals(
-            self.ls.accountByAddress(self.localpart, self.domain),
-            None)
+        self.assertEquals(self.ls.accountByAddress(self.localpart, self.domain), None)
 
-        self.failIf(list(self.store.query(SubStore, SubStore.storepath == self.origdir)))
+        self.failIf(
+            list(self.store.query(SubStore, SubStore.storepath == self.origdir))
+        )
         self.origdir.restat(False)
         self.failIf(self.origdir.exists())
         self.failIf(list(self.store.query(_SubSchedulerParentHook)))
-
 
     def test_noTimedEventsInsertion(self):
         """
@@ -487,7 +487,6 @@ class SubStoreMigrationTestCase(unittest.TestCase):
         self.test_noTimedEventsExtraction()
         self._testInsertion()
 
-
     def test_insertion(self, _deleteDomainDirectory=False):
         """
         Test that inserting a user store succeeds and that the right
@@ -495,19 +494,21 @@ class SubStoreMigrationTestCase(unittest.TestCase):
         """
         self.test_extraction()
         self._testInsertion(_deleteDomainDirectory)
-        insertedStore = self.ls.accountByAddress(self.localpart,
-                                                 self.domain).avatars.open()
+        insertedStore = self.ls.accountByAddress(
+            self.localpart, self.domain
+        ).avatars.open()
         self.assertEquals(
             insertedStore.findUnique(ThingThatMovesAround).superValue,
-            self.IMPORTANT_VALUE)
+            self.IMPORTANT_VALUE,
+        )
         siteStoreSubRef = self.store.getItemByID(insertedStore.idInParent)
-        ssph = self.store.findUnique(_SubSchedulerParentHook,
-                         _SubSchedulerParentHook.subStore == siteStoreSubRef,
-                                     default=None)
+        ssph = self.store.findUnique(
+            _SubSchedulerParentHook,
+            _SubSchedulerParentHook.subStore == siteStoreSubRef,
+            default=None,
+        )
         self.failUnless(ssph)
-        self.failUnless(self.store.findUnique(TimedEvent,
-                                              TimedEvent.runnable == ssph))
-
+        self.failUnless(self.store.findUnique(TimedEvent, TimedEvent.runnable == ssph))
 
     def _testInsertion(self, _deleteDomainDirectory=False):
         """
@@ -517,7 +518,6 @@ class SubStoreMigrationTestCase(unittest.TestCase):
             self.store.filesdir.child('account').child(self.domain).remove()
 
         userbase.insertUserStore(self.store, self.destdir)
-
 
     def test_insertionWithNoDomainDirectory(self):
         """
@@ -531,6 +531,7 @@ class RealmTestCase(unittest.TestCase):
     """
     Tests for the L{IRealm} implementation in L{axiom.userbase}.
     """
+
     localpart = u'testuser'
     domain = u'example.com'
     password = u'password'
@@ -540,17 +541,14 @@ class RealmTestCase(unittest.TestCase):
         self.realm = userbase.LoginSystem(store=self.store)
         dependency.installOn(self.realm, self.store)
 
-
     def test_powerup(self):
         """
         Test that L{LoginSystem} powers up the store for L{IRealm}.
         """
         self.assertIdentical(self.realm, IRealm(self.store))
 
-
     def _requestAvatarId(self, credentials):
         return maybeDeferred(self.realm.requestAvatarId, credentials)
-
 
     def test_requestNonexistentAvatarId(self):
         """
@@ -558,20 +556,16 @@ class RealmTestCase(unittest.TestCase):
         with a L{NoSuchUser} exception.
         """
         username = u'%s@%s' % (self.localpart, self.domain)
-        d = self._requestAvatarId(
-            UsernamePassword(username, self.password))
+        d = self._requestAvatarId(UsernamePassword(username, self.password))
         return self.assertFailure(d, errors.NoSuchUser)
-
 
     def test_requestMalformedAvatarId(self):
         """
         Test that trying to authenticate as a user without specifying a
         hostname fails with a L{NoSuchUser} exception.
         """
-        d = self._requestAvatarId(
-            UsernamePassword(self.localpart, self.password))
+        d = self._requestAvatarId(UsernamePassword(self.localpart, self.password))
         return self.assertFailure(d, errors.MissingDomainPart)
-
 
     def test_usernamepassword(self):
         """
@@ -579,13 +573,11 @@ class RealmTestCase(unittest.TestCase):
         L{LoginAccount} associated with a L{UsernamePassword} credentials
         object if the username and password identify an existing account.
         """
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         username = u'%s@%s' % (self.localpart, self.domain)
         d = self._requestAvatarId(UsernamePassword(username, self.password))
         d.addCallback(self.assertEqual, account.storeID)
         return d
-
 
     def test_usernamepasswordInvalid(self):
         """
@@ -593,13 +585,11 @@ class RealmTestCase(unittest.TestCase):
         the password supplied with the L{UsernamePassword} credentials is
         not valid for the provided username.
         """
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         username = u'%s@%s' % (self.localpart, self.domain)
         d = self._requestAvatarId(UsernamePassword(username, u'blahblah'))
         self.assertFailure(d, UnauthorizedLogin)
         return d
-
 
     def test_preauthenticated(self):
         """
@@ -607,13 +597,11 @@ class RealmTestCase(unittest.TestCase):
         L{LoginAccount} associated with a L{Preauthenticated} credentials
         object.
         """
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         username = u'%s@%s' % (self.localpart, self.domain)
         d = self._requestAvatarId(userbase.Preauthenticated(username))
         d.addCallback(self.assertEqual, account.storeID)
         return d
-
 
     def test_setPassword(self):
         """
@@ -621,8 +609,7 @@ class RealmTestCase(unittest.TestCase):
         and not the old.
         """
         self.realm._txCryptContext, perform = getTestContext()
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         username = u'%s@%s' % (self.localpart, self.domain)
         d = account.setPassword(u'blahblah')
         perform()
@@ -637,20 +624,17 @@ class RealmTestCase(unittest.TestCase):
         perform()
         self.failureResultOf(d, UnauthorizedLogin)
 
-
     def test_replacePasswordWrong(self):
         """
         L{LoginAccount.replacePassword} fails with L{BadCredentials} if an
         incorrect current password is supplied.
         """
         self.realm._txCryptContext, perform = getTestContext()
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         d = account.replacePassword(u'blahblah', u'blah')
         perform()
         perform()
         self.failureResultOf(d, errors.BadCredentials)
-
 
     def test_replacePasswordCorrect(self):
         """
@@ -658,8 +642,7 @@ class RealmTestCase(unittest.TestCase):
         password and not the old if the correct current password is supplied.
         """
         self.realm._txCryptContext, perform = getTestContext()
-        account = self.realm.addAccount(
-            self.localpart, self.domain, self.password)
+        account = self.realm.addAccount(self.localpart, self.domain, self.password)
         username = u'%s@%s' % (self.localpart, self.domain)
         d = account.replacePassword(self.password, u'blahblah')
         perform()
@@ -673,20 +656,19 @@ class RealmTestCase(unittest.TestCase):
         self.failureResultOf(d, UnauthorizedLogin)
 
 
-
 class PreauthenticatedTests(unittest.TestCase):
     """
     Tests for L{userbase.Preauthenticated}.
     """
+
     def test_repr(self):
         """
         L{userbase.Preauthenticated} has a repr which identifies its type and
         its user.
         """
         self.assertEqual(
-            repr(userbase.Preauthenticated(u'foo@bar')),
-            '<Preauthenticated: foo@bar>')
-
+            repr(userbase.Preauthenticated(u'foo@bar')), '<Preauthenticated: foo@bar>'
+        )
 
     def test_usernamepassword(self):
         """
@@ -696,7 +678,9 @@ class PreauthenticatedTests(unittest.TestCase):
         creds = userbase.Preauthenticated(u'foo@bar')
         self.assertTrue(
             verifyObject(IUsernamePassword, creds),
-            "Preauthenticated does not implement IUsernamePassword")
+            "Preauthenticated does not implement IUsernamePassword",
+        )
         self.assertTrue(
             creds.checkPassword('random string'),
-            "Preauthenticated did not accept an arbitrary password.")
+            "Preauthenticated did not accept an arbitrary password.",
+        )

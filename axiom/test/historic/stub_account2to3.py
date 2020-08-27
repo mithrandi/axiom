@@ -14,4 +14,4 @@ def createDatabase(s):
 
 
 if __name__ == '__main__':
-    saveStub(createDatabase, 0x1240846306fcda3289550cdf9515b2c7111d2bac)
+    saveStub(createDatabase, 0x1240846306FCDA3289550CDF9515B2C7111D2BAC)
